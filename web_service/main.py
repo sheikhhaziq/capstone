@@ -1,0 +1,40 @@
+from fastapi import FastAPI, Request
+from fastapi.templating import Jinja2Templates
+from fastapi.responses import HTMLResponse
+from pydantic import BaseModel
+import httpx
+import os
+
+app = FastAPI()
+
+# Setup Templates (The HTML file)
+templates = Jinja2Templates(directory="templates")
+
+# Read URL from Environment Variable (Default to internal docker DNS if not set)
+AI_SERVICE_URL = os.getenv("AI_SERVICE_URL", "http://ai_service:8001/chat/")
+
+# Define the input format
+class ChatInput(BaseModel):
+    text: str
+    history_ids: list = []
+
+# 1. Serve the UI
+@app.get("/", response_class=HTMLResponse)
+async def read_root(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request})
+
+# 2. Proxy to AI Service
+@app.post("/api/chat")
+async def chat_proxy(input_data: ChatInput):
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        try:
+            # Forward the data exactly as received using the Env Variable
+            response = await client.post(AI_SERVICE_URL, json=input_data.dict())
+            response.raise_for_status()
+            return response.json()
+        except httpx.RequestError as exc:
+            print(f"Connection Error to {AI_SERVICE_URL}: {exc}")
+            return {"response": "Error: Could not connect to AI Service. Please try again later.", "status": "ERROR"}
+        except httpx.HTTPStatusError as exc:
+            print(f"HTTP Error {exc.response.status_code} from {AI_SERVICE_URL}: {exc}")
+            return {"response": f"Error: AI Service returned {exc.response.status_code}.", "status": "ERROR"}

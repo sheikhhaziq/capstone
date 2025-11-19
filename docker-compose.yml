@@ -1,0 +1,35 @@
+services:
+  # 1. The AI Logic
+  # This service downloads the Qwen model and exposes port 8001
+  ai_service:
+    build: ./ai_service
+    ports:
+      - "8001:8001"
+    volumes:
+      # Mounts local Hugging Face cache to avoid re-downloading models on every restart
+      - ~/.cache/huggingface:/root/.cache/huggingface
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [ gpu ]
+    environment:
+      - MODEL_NAME=Qwen/Qwen2.5-0.5B-Instruct
+      - MAX_HISTORY_TOKENS=1000
+
+  # 2. The Web Backend
+  # This service serves the UI and proxies requests to the AI service
+  web_service:
+    build: ./web_service
+    ports:
+      - "8000:8000" # Map container port 8000 to host port 8000 (Browser Access)
+    depends_on:
+      - ai_service # Ensures ai_service starts first
+    environment:
+      # Points to the internal Docker hostname of the AI service
+      - AI_SERVICE_URL=http://ai_service:8001/chat/
+    volumes:
+      # Mounts the local code to /app so you can edit HTML/Python without rebuilding
+      - ./web_service:/app
