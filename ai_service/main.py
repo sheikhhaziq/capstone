@@ -7,17 +7,15 @@ import traceback
 import os
 import logging
 
-# --- Configuration ---
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-MODEL_NAME = os.getenv("MODEL_NAME", "Qwen/Qwen2.5-0.5B-Instruct")
+MODEL_NAME = os.getenv("MODEL_NAME", "Qwen/Qwen3-1.7B")
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 MAX_HISTORY_TOKENS = int(os.getenv("MAX_HISTORY_TOKENS", 1000))
 
 app = FastAPI()
 
-# --- Prompts ---
 SYSTEM_MSG = (
     "You are MindSpace, a compassionate AI counselor for college students. "
     "Validate feelings and offer gentle advice. "
@@ -39,7 +37,6 @@ FEW_SHOT_PROMPT = (
     "3. [Resource Library](https://mindspace.app/resource-library) - Helpful guides and articles.<|im_end|>\n"
 )
 
-# --- Load Model ---
 logger.info(f"Loading AI Model ({MODEL_NAME}) on {DEVICE.upper()}...")
 try:
     tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
@@ -58,27 +55,22 @@ def chat_response(request: ChatRequest):
     user_input = request.text
     
     try:
-        # --- STEP A: Construct Input ---
         if not request.history_ids or len(request.history_ids) == 0:
-            # Start with the example + user input
             full_prompt = FEW_SHOT_PROMPT + f"<|im_start|>user\n{user_input}<|im_end|>\n<|im_start|>assistant\n"
             bot_input_ids = tokenizer.encode(full_prompt, return_tensors='pt').to(DEVICE)
         else:
-            # If history exists, just append new input
             new_input_text = f"<|im_start|>user\n{user_input}<|im_end|>\n<|im_start|>assistant\n"
             new_ids = tokenizer.encode(new_input_text, return_tensors='pt').to(DEVICE)
             
             past_history = torch.tensor(request.history_ids).to(DEVICE)
             
             if past_history.shape[-1] > MAX_HISTORY_TOKENS:
-                # Re-inject the few-shot prompt if history gets truncated
                 few_shot_ids = tokenizer.encode(FEW_SHOT_PROMPT, return_tensors='pt').to(DEVICE)
                 recent_history = past_history[:, -600:] 
                 bot_input_ids = torch.cat([few_shot_ids, recent_history, new_ids], dim=-1)
             else:
                 bot_input_ids = torch.cat([past_history, new_ids], dim=-1)
 
-        # --- STEP B: Generate ---
         attention_mask = torch.ones_like(bot_input_ids).to(DEVICE)
 
         chat_history_ids = model.generate(
@@ -89,11 +81,10 @@ def chat_response(request: ChatRequest):
             do_sample=True, 
             top_k=50, 
             top_p=0.95,
-            temperature=0.2,          # Strict adherence
+            temperature=0.2,          
             repetition_penalty=1.1    
         )
 
-        # --- STEP C: Decode ---
         new_tokens = chat_history_ids[:, bot_input_ids.shape[-1]:]
         response_text = tokenizer.decode(new_tokens[0], skip_special_tokens=True)
 
