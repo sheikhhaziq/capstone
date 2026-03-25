@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-100 min-h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-md bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+        <h1 class="text-2xl font-bold text-slate-800">Admin Login</h1>
+        <div class="mt-5 space-y-3">
+            <input id="admin-id" type="text" placeholder="Admin ID"
+                class="w-full bg-slate-100 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500">
+            <input id="password" type="password" placeholder="Password"
+                class="w-full bg-slate-100 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500">
+            <button onclick="login()"
+                class="w-full bg-teal-600 hover:bg-teal-700 text-white rounded-xl py-3 text-sm font-medium">Login</button>
+        </div>
+        <p id="message" class="text-sm mt-3 text-red-600"></p>
+    </div>
+    <script>
+        async function login() {
+            const admin_id = document.getElementById('admin-id').value.trim();
+            const password = document.getElementById('password').value.trim();
+            const message = document.getElementById('message');
+            message.textContent = '';
+            const response = await fetch('/api/admin/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ admin_id, password })
+            });
+            const data = await response.json();
+            if (response.ok && data.status === 'OK') {
+                window.location.href = '/admin/dashboard';
+                return;
+            }
+            message.textContent = data.message || 'Login failed.';
+        }
+    </script>
+</body>
+</html>

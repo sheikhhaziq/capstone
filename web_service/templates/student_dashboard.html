@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-100 min-h-screen p-6">
+    <div class="max-w-6xl mx-auto">
+        <div class="flex items-center justify-between mb-6">
+            <h1 class="text-2xl font-bold text-slate-800">Student Dashboard</h1>
+            <div class="space-x-3">
+                <a href="/chat" class="text-sm text-teal-700 hover:underline">AI Chat</a>
+                <a href="{{ forum_url }}/forum" target="_blank" rel="noopener noreferrer" class="text-sm text-teal-700 hover:underline">Peer Forum</a>
+                <button onclick="logout()" class="text-sm text-red-600 hover:underline">Logout</button>
+            </div>
+        </div>
+        <p id="session-text" class="text-sm text-slate-600 mb-4"></p>
+
+        <div class="grid md:grid-cols-2 gap-6">
+            <section class="bg-white rounded-xl border border-slate-200 p-4">
+                <h2 class="font-semibold text-slate-800 mb-3">Available Slots</h2>
+                <div id="slot-list" class="space-y-2 text-sm text-slate-700"></div>
+            </section>
+
+            <section class="bg-white rounded-xl border border-slate-200 p-4">
+                <h2 class="font-semibold text-slate-800 mb-3">My Appointments</h2>
+                <div id="appointment-list" class="space-y-2 text-sm text-slate-700"></div>
+            </section>
+        </div>
+    </div>
+
+    <script>
+        async function requireStudentSession() {
+            const response = await fetch('/api/session');
+            if (!response.ok) {
+                window.location.href = '/login';
+                return null;
+            }
+            const data = await response.json();
+            if (data.user.role !== 'student') {
+                window.location.href = '/login';
+                return null;
+            }
+            document.getElementById('session-text').textContent = `Logged in as ${data.user.name} (${data.user.subject})`;
+            return data.user;
+        }
+
+        function formatTime(iso) {
+            return new Date(iso).toLocaleString();
+        }
+
+        async function loadSlots() {
+            const slotList = document.getElementById('slot-list');
+            slotList.innerHTML = 'Loading...';
+            const response = await fetch('/api/student/slots');
+            const data = await response.json();
+            if (!response.ok || data.status !== 'OK') {
+                slotList.textContent = 'Could not load slots.';
+                return;
+            }
+            if (data.slots.length === 0) {
+                slotList.textContent = 'No open slots right now.';
+                return;
+            }
+            slotList.innerHTML = '';
+            data.slots.forEach(slot => {
+                const row = document.createElement('div');
+                row.className = 'border border-slate-200 rounded-lg p-3';
+                row.innerHTML = `
+                    <p class="font-medium">${slot.psychologist_name} (${slot.specialization})</p>
+                    <p class="text-slate-600">${formatTime(slot.start_at)} - ${formatTime(slot.end_at)}</p>
+                    <button class="mt-2 px-3 py-1 text-xs bg-teal-600 text-white rounded hover:bg-teal-700">Book Slot</button>
+                `;
+                row.querySelector('button').onclick = async () => {
+                    const bookResp = await fetch('/api/student/appointments/book', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ slot_id: slot.slot_id })
+                    });
+                    const bookData = await bookResp.json();
+                    if (bookResp.ok) {
+                        await loadSlots();
+                        await loadAppointments();
+                    } else {
+                        alert(bookData.message || 'Slot already taken, please choose another.');
+                        await loadSlots();
+                    }
+                };
+                slotList.appendChild(row);
+            });
+        }
+
+        async function loadAppointments() {
+            const list = document.getElementById('appointment-list');
+            list.innerHTML = 'Loading...';
+            const response = await fetch('/api/student/appointments');
+            const data = await response.json();
+            if (!response.ok || data.status !== 'OK') {
+                list.textContent = 'Could not load appointments.';
+                return;
+            }
+            if (data.appointments.length === 0) {
+                list.textContent = 'No appointments yet.';
+                return;
+            }
+            list.innerHTML = '';
+            data.appointments.forEach(item => {
+                const row = document.createElement('div');
+                row.className = 'border border-slate-200 rounded-lg p-3';
+                row.innerHTML = `
+                    <p class="font-medium">${item.psychologist_name}</p>
+                    <p class="text-slate-600">${formatTime(item.start_at)} - ${formatTime(item.end_at)}</p>
+                    <p class="text-xs uppercase tracking-wide mt-1">${item.status}</p>
+                    <a class="mt-2 inline-block px-3 py-1 text-xs bg-slate-800 text-white rounded hover:bg-slate-900" href="/appointments/chat/${item.appointment_id}">Join Chat</a>
+                `;
+                list.appendChild(row);
+            });
+        }
+
+        async function logout() {
+            await fetch('/api/logout', { method: 'POST' });
+            window.location.href = '/login';
+        }
+
+        (async function init() {
+            const session = await requireStudentSession();
+            if (!session) return;
+            await loadSlots();
+            await loadAppointments();
+        })();
+    </script>
+</body>
+</html>

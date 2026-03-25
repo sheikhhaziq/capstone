@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MindSpace Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-100 min-h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-md bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+        <h1 class="text-2xl font-bold text-slate-800">Student Login</h1>
+        <p class="text-sm text-slate-500 mt-1">Login to access MindSpace chat.</p>
+        <div class="mt-5 space-y-3">
+            <input id="student-id" type="text" placeholder="Student ID"
+                class="w-full bg-slate-100 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500">
+            <input id="password" type="password" placeholder="Password"
+                class="w-full bg-slate-100 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500">
+            <button onclick="login()"
+                class="w-full bg-teal-600 hover:bg-teal-700 text-white rounded-xl py-3 text-sm font-medium">Login</button>
+        </div>
+        <p id="message" class="text-sm mt-3 text-red-600"></p>
+        <p class="text-sm text-slate-600 mt-4">No account?
+            <a href="/signup" class="text-teal-700 font-semibold hover:underline">Create one</a>
+        </p>
+        <div class="text-xs text-slate-500 mt-4 space-x-3">
+            <a href="/psychologist/login" class="hover:underline">Psychologist Login</a>
+            <a href="/admin/login" class="hover:underline">Admin Login</a>
+        </div>
+    </div>
+
+    <script>
+        async function login() {
+            const student_id = document.getElementById('student-id').value.trim();
+            const password = document.getElementById('password').value.trim();
+            const message = document.getElementById('message');
+            message.textContent = '';
+            if (!student_id || !password) {
+                message.textContent = 'Please fill all fields.';
+                return;
+            }
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ student_id, password })
+                });
+                const data = await response.json();
+                if (response.ok && data.status === 'OK') {
+                    window.location.href = '/student/dashboard';
+                    return;
+                }
+                message.textContent = data.message || 'Login failed.';
+            } catch (error) {
+                message.textContent = 'Unable to connect to server.';
+            }
+        }
+    </script>
+</body>
+</html>

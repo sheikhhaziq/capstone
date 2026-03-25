@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Psychologist Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-100 min-h-screen p-6">
+    <div class="max-w-5xl mx-auto">
+        <div class="flex items-center justify-between mb-6">
+            <h1 class="text-2xl font-bold text-slate-800">Psychologist Dashboard</h1>
+            <button onclick="logout()" class="text-sm text-red-600 hover:underline">Logout</button>
+        </div>
+        <p id="session-text" class="text-sm text-slate-600 mb-4"></p>
+        <div class="grid md:grid-cols-2 gap-6">
+            <section class="bg-white rounded-xl border border-slate-200 p-4">
+                <h2 class="font-semibold mb-3">Add Availability Slot</h2>
+                <div class="space-y-2">
+                    <input id="start_at" type="datetime-local" class="w-full bg-slate-100 rounded p-2 text-sm">
+                    <input id="end_at" type="datetime-local" class="w-full bg-slate-100 rounded p-2 text-sm">
+                    <button onclick="addSlot()" class="px-4 py-2 bg-teal-600 text-white rounded text-sm">Add Slot</button>
+                </div>
+                <p id="slot-message" class="text-sm mt-2"></p>
+            </section>
+            <section class="bg-white rounded-xl border border-slate-200 p-4">
+                <h2 class="font-semibold mb-3">Booked Appointments</h2>
+                <div id="appointment-list" class="space-y-2 text-sm"></div>
+            </section>
+        </div>
+    </div>
+
+    <script>
+        function toIso(value) {
+            return new Date(value).toISOString();
+        }
+
+        async function requirePsychologistSession() {
+            const response = await fetch('/api/session');
+            if (!response.ok) {
+                window.location.href = '/psychologist/login';
+                return null;
+            }
+            const data = await response.json();
+            if (data.user.role !== 'psychologist') {
+                window.location.href = '/psychologist/login';
+                return null;
+            }
+            document.getElementById('session-text').textContent = `Logged in as ${data.user.name}`;
+            return data.user;
+        }
+
+        async function addSlot() {
+            const startRaw = document.getElementById('start_at').value;
+            const endRaw = document.getElementById('end_at').value;
+            const message = document.getElementById('slot-message');
+            message.className = 'text-sm mt-2';
+            if (!startRaw || !endRaw) {
+                message.classList.add('text-red-600');
+                message.textContent = 'Please provide start and end date-time.';
+                return;
+            }
+            const response = await fetch('/api/psychologist/slots', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ start_at: toIso(startRaw), end_at: toIso(endRaw) })
+            });
+            const data = await response.json();
+            if (response.ok) {
+                message.classList.add('text-green-700');
+                message.textContent = 'Slot created.';
+            } else {
+                message.classList.add('text-red-600');
+                message.textContent = data.detail || data.message || 'Could not create slot.';
+            }
+        }
+
+        async function loadAppointments() {
+            const list = document.getElementById('appointment-list');
+            list.innerHTML = 'Loading...';
+            const response = await fetch('/api/psychologist/appointments');
+            const data = await response.json();
+            if (!response.ok || data.status !== 'OK') {
+                list.textContent = 'Could not load appointments.';
+                return;
+            }
+            if (data.appointments.length === 0) {
+                list.textContent = 'No appointments yet.';
+                return;
+            }
+            list.innerHTML = '';
+            data.appointments.forEach(item => {
+                const row = document.createElement('div');
+                row.className = 'border border-slate-200 rounded p-3';
+                row.innerHTML = `
+                    <p class="font-medium">${item.student_name} (${item.student_id})</p>
+                    <p class="text-slate-600">${new Date(item.start_at).toLocaleString()} - ${new Date(item.end_at).toLocaleString()}</p>
+                    <p class="text-xs uppercase">${item.status}</p>
+                    <a class="mt-2 inline-block px-3 py-1 text-xs bg-slate-800 text-white rounded hover:bg-slate-900" href="/appointments/chat/${item.appointment_id}">Join Chat</a>
+                `;
+                list.appendChild(row);
+            });
+        }
+
+        async function logout() {
+            await fetch('/api/logout', { method: 'POST' });
+            window.location.href = '/psychologist/login';
+        }
+
+        (async function init() {
+            const session = await requirePsychologistSession();
+            if (!session) return;
+            await loadAppointments();
+        })();
+    </script>
+</body>
+</html>

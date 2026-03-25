@@ -1,4 +1,39 @@
 services:
+  postgres:
+    image: postgres:16
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=mindspace
+      - POSTGRES_PASSWORD=mindspace
+      - POSTGRES_DB=mindspace
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # 0. Authentication Service
+  # Issues and verifies JWT tokens for student access
+  auth_service:
+    build: ./auth_service
+    ports:
+      - "8002:8002"
+    depends_on:
+      - postgres
+    environment:
+      - JWT_SECRET=change-this-secret
+      - JWT_ALGORITHM=HS256
+      - JWT_AUDIENCE=mindspace-services
+      - TOKEN_EXPIRE_MINUTES=60
+      - DATABASE_URL=postgresql+psycopg2://mindspace:mindspace@postgres:5432/mindspace
+      - SEED_STUDENT_ID=student001
+      - SEED_STUDENT_NAME=Demo Student
+      - SEED_STUDENT_PASSWORD=studentpass
+      - SEED_ADMIN_ID=admin001
+      - SEED_ADMIN_NAME=System Admin
+      - SEED_ADMIN_PASSWORD=adminpass
+      - SEED_PSYCHOLOGIST_EMAIL=psych001@mindspace.local
+      - SEED_PSYCHOLOGIST_NAME=Dr Demo
+      - SEED_PSYCHOLOGIST_PASSWORD=psychpass
+
   # 1. The AI Logic
   # This service downloads the Qwen model and exposes port 8001
   ai_service:
@@ -8,16 +43,26 @@ services:
     volumes:
       # Mounts local Hugging Face cache to avoid re-downloading models on every restart
       - ~/.cache/huggingface:/root/.cache/huggingface
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [ gpu ]
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [ gpu ]
     environment:
       - MODEL_NAME=Qwen/Qwen2.5-0.5B-Instruct
       - MAX_HISTORY_TOKENS=1000
+
+  # 2b. Anonymous Peer Forum (separate app; no student login)
+  forum_service:
+    build: ./forum_service
+    ports:
+      - "8003:8003"
+    depends_on:
+      - postgres
+    environment:
+      - DATABASE_URL=postgresql+psycopg2://mindspace:mindspace@postgres:5432/mindspace
 
   # 2. The Web Backend
   # This service serves the UI and proxies requests to the AI service
@@ -26,10 +71,18 @@ services:
     ports:
       - "8000:8000" # Map container port 8000 to host port 8000 (Browser Access)
     depends_on:
+      - auth_service
       - ai_service # Ensures ai_service starts first
     environment:
       # Points to the internal Docker hostname of the AI service
       - AI_SERVICE_URL=http://ai_service:8001/chat/
+      - AUTH_SERVICE_URL=http://auth_service:8002
+      - TOKEN_COOKIE_NAME=mindspace_token
+      # Browser URL for the forum app (host machine)
+      - FORUM_PUBLIC_URL=http://localhost:8003
     volumes:
       # Mounts the local code to /app so you can edit HTML/Python without rebuilding
       - ./web_service:/app
+
+volumes:
+  postgres_data:

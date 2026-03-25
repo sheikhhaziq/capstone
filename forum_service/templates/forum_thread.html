@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ thread.title }} — Peer Forum</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 min-h-screen text-slate-800">
+    <header class="bg-white border-b border-slate-200 shadow-sm">
+        <div class="max-w-3xl mx-auto px-4 py-4">
+            <a href="/forum" class="text-sm text-teal-700 hover:underline">← All topics</a>
+            <h1 class="text-xl font-bold text-slate-900 mt-2">{{ thread.title }}</h1>
+            <p class="text-xs text-slate-500 mt-1">You are <span class="font-medium text-slate-700">{{ peer_label }}</span></p>
+        </div>
+    </header>
+
+    <main class="max-w-3xl mx-auto px-4 py-6 space-y-4">
+        {% for p in posts %}
+        <article class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
+            <p class="text-xs text-slate-500 mb-2">{{ p.peer_label }} · {{ p.created_at.strftime('%Y-%m-%d %H:%M UTC') }}</p>
+            <p class="text-sm text-slate-800 whitespace-pre-wrap">{{ p.body }}</p>
+        </article>
+        {% endfor %}
+
+        <section class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
+            <h2 class="font-semibold text-slate-800 mb-3">Reply</h2>
+            <form method="post" action="/forum/threads/{{ thread.id }}/reply" class="space-y-3">
+                <textarea name="body" required rows="4" maxlength="8000" placeholder="Share support or your experience..."
+                    class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500"></textarea>
+                <button type="submit"
+                    class="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white text-sm font-medium rounded-lg">Reply</button>
+            </form>
+        </section>
+    </main>
+</body>
+</html>

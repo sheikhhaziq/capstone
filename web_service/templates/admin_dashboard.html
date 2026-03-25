@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-100 min-h-screen p-6">
+    <div class="max-w-6xl mx-auto">
+        <div class="flex items-center justify-between mb-6">
+            <h1 class="text-2xl font-bold text-slate-800">Admin Dashboard</h1>
+            <button onclick="logout()" class="text-sm text-red-600 hover:underline">Logout</button>
+        </div>
+        <p id="session-text" class="text-sm text-slate-600 mb-4"></p>
+
+        <div class="grid md:grid-cols-2 gap-6">
+            <section class="bg-white rounded-xl border border-slate-200 p-4">
+                <h2 class="font-semibold mb-3">Add Psychologist</h2>
+                <div class="space-y-2">
+                    <input id="email" type="email" placeholder="Email" class="w-full bg-slate-100 rounded p-2 text-sm">
+                    <input id="name" type="text" placeholder="Name" class="w-full bg-slate-100 rounded p-2 text-sm">
+                    <input id="specialization" type="text" placeholder="Specialization" class="w-full bg-slate-100 rounded p-2 text-sm">
+                    <input id="password" type="password" placeholder="Temporary Password" class="w-full bg-slate-100 rounded p-2 text-sm">
+                    <button onclick="addPsychologist()" class="px-4 py-2 bg-teal-600 text-white rounded text-sm">Create</button>
+                </div>
+                <p id="create-message" class="text-sm mt-2"></p>
+            </section>
+            <section class="bg-white rounded-xl border border-slate-200 p-4">
+                <h2 class="font-semibold mb-3">Psychologists</h2>
+                <div id="psych-list" class="space-y-2 text-sm"></div>
+            </section>
+        </div>
+
+        <section class="bg-white rounded-xl border border-slate-200 p-4 mt-6">
+            <h2 class="font-semibold mb-3">All Appointments</h2>
+            <div id="appointment-list" class="space-y-2 text-sm"></div>
+        </section>
+    </div>
+
+    <script>
+        async function requireAdminSession() {
+            const response = await fetch('/api/session');
+            if (!response.ok) {
+                window.location.href = '/admin/login';
+                return null;
+            }
+            const data = await response.json();
+            if (data.user.role !== 'admin') {
+                window.location.href = '/admin/login';
+                return null;
+            }
+            document.getElementById('session-text').textContent = `Logged in as ${data.user.name} (${data.user.subject})`;
+            return data.user;
+        }
+
+        async function addPsychologist() {
+            const payload = {
+                email: document.getElementById('email').value.trim(),
+                name: document.getElementById('name').value.trim(),
+                specialization: document.getElementById('specialization').value.trim(),
+                password: document.getElementById('password').value.trim()
+            };
+            const message = document.getElementById('create-message');
+            message.className = 'text-sm mt-2';
+            const response = await fetch('/api/admin/psychologists', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await response.json();
+            if (response.ok) {
+                message.classList.add('text-green-700');
+                message.textContent = 'Psychologist added.';
+                await loadPsychologists();
+            } else {
+                message.classList.add('text-red-600');
+                message.textContent = data.detail || data.message || 'Could not add psychologist.';
+            }
+        }
+
+        async function loadPsychologists() {
+            const list = document.getElementById('psych-list');
+            list.innerHTML = 'Loading...';
+            const response = await fetch('/api/admin/psychologists');
+            const data = await response.json();
+            if (!response.ok || data.status !== 'OK') {
+                list.textContent = 'Could not load psychologists.';
+                return;
+            }
+            list.innerHTML = '';
+            data.psychologists.forEach(item => {
+                const row = document.createElement('div');
+                row.className = 'border border-slate-200 rounded p-3';
+                row.innerHTML = `<p class="font-medium">${item.name}</p><p class="text-slate-600">${item.email} • ${item.specialization}</p>`;
+                list.appendChild(row);
+            });
+        }
+
+        async function loadAppointments() {
+            const list = document.getElementById('appointment-list');
+            list.innerHTML = 'Loading...';
+            const response = await fetch('/api/admin/appointments');
+            const data = await response.json();
+            if (!response.ok || data.status !== 'OK') {
+                list.textContent = 'Could not load appointments.';
+                return;
+            }
+            if (data.appointments.length === 0) {
+                list.textContent = 'No appointments booked yet.';
+                return;
+            }
+            list.innerHTML = '';
+            data.appointments.forEach(item => {
+                const row = document.createElement('div');
+                row.className = 'border border-slate-200 rounded p-3';
+                row.innerHTML = `
+                    <p class="font-medium">${item.student_id} with ${item.psychologist_name}</p>
+                    <p class="text-slate-600">${new Date(item.start_at).toLocaleString()} - ${new Date(item.end_at).toLocaleString()}</p>
+                    <p class="text-xs uppercase">${item.status}</p>
+                `;
+                list.appendChild(row);
+            });
+        }
+
+        async function logout() {
+            await fetch('/api/logout', { method: 'POST' });
+            window.location.href = '/admin/login';
+        }
+
+        (async function init() {
+            const session = await requireAdminSession();
+            if (!session) return;
+            await loadPsychologists();
+            await loadAppointments();
+        })();
+    </script>
+</body>
+</html>
