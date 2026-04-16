@@ -10,8 +10,9 @@
     <div class="max-w-6xl mx-auto">
         <div class="flex items-center justify-between mb-6">
             <h1 class="text-2xl font-bold text-slate-800">Student Dashboard</h1>
-            <div class="space-x-3">
+            <div class="space-x-3 flex items-center">
                 <a href="/chat" class="text-sm text-teal-700 hover:underline">AI Chat</a>
+                <button onclick="clearAiHistory()" class="text-sm text-slate-500 hover:text-red-500 transition border-l border-slate-300 pl-3">Clear AI History</button>
                 <a href="{{ forum_url }}/forum" target="_blank" rel="noopener noreferrer" class="text-sm text-teal-700 hover:underline">Peer Forum</a>
                 <a href="/screening" class="text-sm text-teal-700 hover:underline">Take Screening</a>
                 <a href="/resources" class="text-sm text-teal-700 hover:underline">Resource Hub</a>
@@ -34,6 +35,22 @@
     </div>
 
     <script>
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `fixed bottom-4 right-4 px-6 py-3 rounded-lg shadow-lg text-white font-medium transform transition-all translate-y-full opacity-0 z-50 ${type === 'success' ? 'bg-teal-600' : 'bg-red-600'}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.classList.remove('translate-y-full', 'opacity-0');
+            }, 10);
+            
+            setTimeout(() => {
+                toast.classList.add('translate-y-full', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
         async function requireStudentSession() {
             const response = await fetch('/api/session');
             if (!response.ok) {
@@ -50,43 +67,66 @@
         }
 
         function formatTime(iso) {
-            return new Date(iso).toLocaleString();
+            const d = new Date(iso);
+            return d.toLocaleString('en-US', {
+                weekday: 'short', month: 'short', day: 'numeric',
+                hour: 'numeric', minute: '2-digit', hour12: true
+            });
         }
 
         async function loadSlots() {
             const slotList = document.getElementById('slot-list');
-            slotList.innerHTML = 'Loading...';
+            slotList.innerHTML = '<div class="text-slate-400 italic py-4">Loading open slots...</div>';
+            
             const response = await fetch('/api/student/slots');
             const data = await response.json();
+            
             if (!response.ok || data.status !== 'OK') {
-                slotList.textContent = 'Could not load slots.';
+                slotList.innerHTML = '<div class="text-red-500 py-4">Could not load availability slots.</div>';
                 return;
             }
             if (data.slots.length === 0) {
-                slotList.textContent = 'No open slots right now.';
+                slotList.innerHTML = '<div class="p-6 text-center border border-dashed rounded-lg border-slate-300 text-slate-500">No open slots available right now.</div>';
                 return;
             }
+            
             slotList.innerHTML = '';
             data.slots.forEach(slot => {
                 const row = document.createElement('div');
-                row.className = 'border border-slate-200 rounded-lg p-3';
+                row.className = 'border border-slate-200 rounded-xl p-4 flex flex-col justify-between hover:shadow-sm transition-shadow';
                 row.innerHTML = `
-                    <p class="font-medium">${slot.psychologist_name} (${slot.specialization})</p>
-                    <p class="text-slate-600">${formatTime(slot.start_at)} - ${formatTime(slot.end_at)}</p>
-                    <button class="mt-2 px-3 py-1 text-xs bg-teal-600 text-white rounded hover:bg-teal-700">Book Slot</button>
+                    <div>
+                        <p class="font-bold text-slate-800 text-base">${slot.psychologist_name}</p>
+                        <p class="text-teal-700 text-xs font-medium uppercase mb-2">${slot.specialization}</p>
+                        <p class="text-slate-600 font-medium">${formatTime(slot.start_at)}</p>
+                        <p class="text-slate-400 text-sm opacity-80">until ${formatTime(slot.end_at)}</p>
+                    </div>
+                    <button class="mt-4 w-full px-4 py-2.5 bg-teal-600 text-white font-medium rounded-lg hover:bg-teal-700 transition focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-1">Book Appointment</button>
                 `;
-                row.querySelector('button').onclick = async () => {
+                
+                const btn = row.querySelector('button');
+                btn.onclick = async () => {
+                    const originalText = btn.textContent;
+                    btn.textContent = 'Booking...';
+                    btn.disabled = true;
+                    btn.classList.add('opacity-70', 'cursor-not-allowed');
+
                     const bookResp = await fetch('/api/student/appointments/book', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ slot_id: slot.slot_id })
                     });
+                    
                     const bookData = await bookResp.json();
                     if (bookResp.ok) {
+                        showToast('Appointment easily booked!', 'success');
                         await loadSlots();
                         await loadAppointments();
                     } else {
-                        alert(bookData.message || 'Slot already taken, please choose another.');
+                        showToast(bookData.message || bookData.detail || 'Failed to book slot.', 'error');
+                        btn.textContent = originalText;
+                        btn.disabled = false;
+                        btn.classList.remove('opacity-70', 'cursor-not-allowed');
                         await loadSlots();
                     }
                 };
@@ -96,26 +136,33 @@
 
         async function loadAppointments() {
             const list = document.getElementById('appointment-list');
-            list.innerHTML = 'Loading...';
+            list.innerHTML = '<div class="text-slate-400 italic py-4">Loading your appointments...</div>';
+            
             const response = await fetch('/api/student/appointments');
             const data = await response.json();
+            
             if (!response.ok || data.status !== 'OK') {
-                list.textContent = 'Could not load appointments.';
+                list.innerHTML = '<div class="text-red-500 py-4">Could not load your appointments.</div>';
                 return;
             }
             if (data.appointments.length === 0) {
-                list.textContent = 'No appointments yet.';
+                list.innerHTML = '<div class="p-6 text-center border border-dashed rounded-lg border-slate-300 text-slate-500">You have no upcoming appointments.</div>';
                 return;
             }
+            
             list.innerHTML = '';
             data.appointments.forEach(item => {
                 const row = document.createElement('div');
-                row.className = 'border border-slate-200 rounded-lg p-3';
+                row.className = 'border border-slate-200 bg-slate-50 rounded-xl p-4 flex flex-col justify-between';
                 row.innerHTML = `
-                    <p class="font-medium">${item.psychologist_name}</p>
-                    <p class="text-slate-600">${formatTime(item.start_at)} - ${formatTime(item.end_at)}</p>
-                    <p class="text-xs uppercase tracking-wide mt-1">${item.status}</p>
-                    <a class="mt-2 inline-block px-3 py-1 text-xs bg-slate-800 text-white rounded hover:bg-slate-900" href="/appointments/chat/${item.appointment_id}">Join Chat</a>
+                    <div class="flex justify-between items-start mb-2">
+                        <p class="font-bold text-slate-800">${item.psychologist_name}</p>
+                        <span class="px-2 py-1 text-[10px] uppercase font-bold tracking-wider rounded-full ${
+                            item.status === 'booked' ? 'bg-amber-100 text-amber-800' : 'bg-slate-200 text-slate-700'
+                        }">${item.status}</span>
+                    </div>
+                    <p class="text-slate-600 font-medium">${formatTime(item.start_at)}</p>
+                    <a class="mt-4 block text-center w-full px-4 py-2.5 bg-slate-800 text-white font-medium rounded-lg hover:bg-slate-900 transition" href="/appointments/chat/${item.appointment_id}">Join Room</a>
                 `;
                 list.appendChild(row);
             });
@@ -124,6 +171,21 @@
         async function logout() {
             await fetch('/api/logout', { method: 'POST' });
             window.location.href = '/login';
+        }
+
+        async function clearAiHistory() {
+            if (!confirm('Are you sure you want to delete your entire AI chat history? This cannot be undone.')) return;
+            
+            try {
+                const response = await fetch('/api/chat/reset', { method: 'POST' });
+                if (response.ok) {
+                    showToast('AI Chat history cleared successfully!', 'success');
+                } else {
+                    showToast('Failed to clear history.', 'error');
+                }
+            } catch (error) {
+                showToast('Connection error.', 'error');
+            }
         }
 
         (async function init() {

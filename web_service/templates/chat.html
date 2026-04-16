@@ -21,6 +21,9 @@
             </div>
         </div>
         <div class="flex items-center gap-3">
+            <button onclick="clearChatHistory()" class="text-sm text-slate-400 hover:text-red-500 transition" title="Clear Chat History">
+                <i class="fa-solid fa-trash-can mr-1"></i> Clear History
+            </button>
             <span id="auth-status" class="text-xs text-slate-500"></span>
             <button onclick="logout()" class="text-sm text-slate-400 hover:text-red-500 transition">
                 <i class="fa-solid fa-right-from-bracket mr-1"></i> Logout
@@ -95,30 +98,95 @@
             if (!text) return;
             addMessage(text, true);
             userInput.value = '';
+
+            // Add placeholder for assistant response
+            const responseDiv = document.createElement('div');
+            responseDiv.className = 'flex justify-start';
+            const bubble = document.createElement('div');
+            bubble.className = 'bg-white border border-slate-100 rounded-2xl rounded-tl-none p-4 shadow-sm max-w-[85%] md:max-w-[70%] text-sm leading-relaxed prose';
+            bubble.innerHTML = '<span class="animate-pulse">...</span>';
+            responseDiv.appendChild(bubble);
+            chatContainer.appendChild(responseDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+
             try {
                 const response = await fetch('/api/chat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ text, history_ids: [] })
                 });
-                const data = await response.json();
+
                 if (response.status === 401) {
                     window.location.href = '/login';
                     return;
                 }
-                if (data.status === 'OK') {
-                    addMessage(data.response, false);
-                } else {
-                    addMessage(data.response || 'I am having trouble right now.', false);
+
+                if (!response.ok) {
+                    bubble.textContent = 'I am having trouble right now.';
+                    return;
+                }
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let fullText = "";
+                bubble.innerHTML = ""; // Clear the pulse
+
+                while (true) {
+                    const { value, done } = await reader.read();
+                    if (done) break;
+                    
+                    const chunk = decoder.decode(value, { stream: true });
+                    const lines = chunk.split('\n');
+                    
+                    for (const line of lines) {
+                        if (!line.trim()) continue;
+                        try {
+                            const data = JSON.parse(line);
+                            if (data.text) {
+                                fullText += data.text;
+                                // Sanitize and parse markdown
+                                bubble.innerHTML = DOMPurify.sanitize(marked.parse(fullText));
+                                chatContainer.scrollTop = chatContainer.scrollHeight;
+                            }
+                            if (data.response) { // Crisis alert block
+                                fullText = data.response;
+                                bubble.innerHTML = DOMPurify.sanitize(marked.parse(fullText));
+                                chatContainer.scrollTop = chatContainer.scrollHeight;
+                            }
+                        } catch (e) {
+                            console.error("Error parsing chunk", e);
+                        }
+                    }
                 }
             } catch (error) {
-                addMessage('Server connection error.', false);
+                bubble.textContent = 'Server connection error.';
             }
         }
 
         async function logout() {
             await fetch('/api/logout', { method: 'POST' });
             window.location.href = '/login';
+        }
+
+        async function clearChatHistory() {
+            if (!confirm('Are you sure you want to delete your entire chat history? This cannot be undone.')) return;
+            
+            try {
+                const response = await fetch('/api/chat/reset', { method: 'POST' });
+                if (response.ok) {
+                    chatContainer.innerHTML = `
+                        <div class="flex justify-start">
+                            <div class="bg-white border border-slate-100 rounded-2xl rounded-tl-none p-4 shadow-sm max-w-[85%] md:max-w-[70%]">
+                                <p class="text-sm leading-relaxed">History cleared. How can I help you today?</p>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    alert('Failed to clear history.');
+                }
+            } catch (error) {
+                alert('Connection error.');
+            }
         }
 
         (async function init() {

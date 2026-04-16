@@ -1,12 +1,11 @@
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.templating import Jinja2Templates
-from fastapi.responses import HTMLResponse
-from fastapi.responses import JSONResponse
-from fastapi.responses import RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, StreamingResponse
 from pydantic import BaseModel, Field
 import httpx
 import os
 import logging
+import json
 
 app = FastAPI()
 logger = logging.getLogger(__name__)
@@ -342,6 +341,20 @@ async def chat_history(request: Request):
         return JSONResponse(status_code=response.status_code, content=response.json())
 
 
+@app.post("/api/chat/reset")
+async def reset_chat_history(request: Request):
+    try:
+        token = await get_token_or_401(request)
+    except HTTPException:
+        return JSONResponse(status_code=401, content={"status": "ERROR", "message": "Not authenticated"})
+    async with httpx.AsyncClient(timeout=15.0) as client:
+        try:
+            response = await client.post(f"{AUTH_SERVICE_URL}/student/ai-chat/reset", json={"token": token})
+            return JSONResponse(status_code=response.status_code, content=response.json())
+        except (httpx.HTTPStatusError, httpx.RequestError):
+            return JSONResponse(status_code=502, content={"status": "ERROR", "message": "Failed to reset chat history."})
+
+
 @app.post("/api/psychologist/slots")
 async def psychologist_create_slot(request: Request, input_data: PsychologistSlotInput):
     try:
@@ -353,6 +366,17 @@ async def psychologist_create_slot(request: Request, input_data: PsychologistSlo
             f"{AUTH_SERVICE_URL}/psychologist/slots",
             json={"token": token, "start_at": input_data.start_at, "end_at": input_data.end_at},
         )
+        return JSONResponse(status_code=response.status_code, content=response.json())
+
+
+@app.get("/api/psychologist/slots")
+async def get_psychologist_slots(request: Request):
+    try:
+        token = await get_token_or_401(request)
+    except HTTPException:
+        return JSONResponse(status_code=401, content={"status": "ERROR", "message": "Not authenticated"})
+    async with httpx.AsyncClient(timeout=15.0) as client:
+        response = await client.post(f"{AUTH_SERVICE_URL}/psychologist/slots/list", json={"token": token})
         return JSONResponse(status_code=response.status_code, content=response.json())
 
 
@@ -457,64 +481,63 @@ async def chat_proxy(request: Request, input_data: ChatInput):
     if not token:
         return JSONResponse(status_code=401, content={"status": "ERROR", "response": "Please login as a student first."})
 
-    async with httpx.AsyncClient(timeout=30.0) as client:
-        try:
-            await verify_student_token(token)
+    try:
+        await verify_student_token(token)
+    except Exception:
+        return JSONResponse(status_code=401, content={"status": "ERROR", "response": "Session expired. Please login again."})
+
+    async def stream_generator():
+        async with httpx.AsyncClient(timeout=60.0) as client:
             state_response = await client.post(f"{AUTH_SERVICE_URL}/student/ai-chat/state", json={"token": token})
             state_response.raise_for_status()
             state_data = state_response.json()
             history_ids = state_data.get("history_ids", [])
 
-            response = await client.post(AI_SERVICE_URL, json={"text": input_data.text, "history_ids": history_ids})
-            response.raise_for_status()
-            ai_data = response.json()
-            if ai_data.get("status") == "OK":
-                await client.post(
-                    f"{AUTH_SERVICE_URL}/student/ai-chat/update",
-                    json={
-                        "token": token,
-                        "history_ids": ai_data.get("history_ids", []),
-                        "user_text": input_data.text,
-                        "assistant_text": ai_data.get("response", ""),
-                    },
-                )
-            elif ai_data.get("status") == "CRISIS_ALERT":
-                await client.post(f"{AUTH_SERVICE_URL}/student/ai-chat/reset", json={"token": token})
-            return ai_data
-        except httpx.HTTPStatusError as exc:
-            if exc.request.url.path.endswith("/auth/verify"):
-                return JSONResponse(
-                    status_code=401,
-                    content={"status": "ERROR", "response": "Session expired or invalid. Please login again."},
-                )
-            logger.error(
-                "HTTP error %s from AI service %s: %s",
-                exc.response.status_code,
-                AI_SERVICE_URL,
-                exc,
-            )
-            return JSONResponse(
-                status_code=502,
-                content={
-                    "response": f"Error: AI Service returned {exc.response.status_code}.",
-                    "status": "ERROR",
-                },
-            )
-        except httpx.RequestError as exc:
-            if exc.request.url.path.endswith("/auth/verify"):
-                logger.error("Connection error to auth service %s: %s", AUTH_SERVICE_URL, exc)
-                return JSONResponse(
-                    status_code=503,
-                    content={"status": "ERROR", "response": "Authentication service unavailable."},
-                )
-            logger.error("Connection error to AI service %s: %s", AI_SERVICE_URL, exc)
-            return JSONResponse(
-                status_code=503,
-                content={
-                    "response": "Error: Could not connect to AI Service. Please try again later.",
-                    "status": "ERROR",
-                },
-            )
+            full_response_text = ""
+            final_history_ids = []
+            is_crisis = False
+
+            try:
+                async with client.stream("POST", AI_SERVICE_URL, json={"text": input_data.text, "history_ids": history_ids}) as response:
+                    async for line in response.aiter_lines():
+                        if not line.strip():
+                            continue
+                        chunk = json.loads(line)
+                        
+                        if chunk.get("status") == "CRISIS_ALERT":
+                            is_crisis = True
+                            full_response_text = chunk.get("response", "")
+                            yield line + "\n"
+                            break
+
+                        if "text" in chunk:
+                            full_response_text += chunk["text"]
+                            yield line + "\n"
+                        
+                        if "history_ids" in chunk:
+                            final_history_ids = chunk["history_ids"]
+                            if "full_response" in chunk:
+                                full_response_text = chunk["full_response"]
+                            yield line + "\n"
+
+                # Update history after stream finishes
+                if is_crisis:
+                    await client.post(f"{AUTH_SERVICE_URL}/student/ai-chat/reset", json={"token": token})
+                elif final_history_ids:
+                    await client.post(
+                        f"{AUTH_SERVICE_URL}/student/ai-chat/update",
+                        json={
+                            "token": token,
+                            "history_ids": final_history_ids,
+                            "user_text": input_data.text,
+                            "assistant_text": full_response_text,
+                        },
+                    )
+            except Exception as e:
+                logger.error("Error in chat streaming: %s", e)
+                yield json.dumps({"text": "\n[Error connecting to AI service]", "status": "ERROR"}) + "\n"
+
+    return StreamingResponse(stream_generator(), media_type="application/x-ndjson")
 
 
 @app.post("/api/student/screening")

@@ -540,6 +540,34 @@ def psychologist_create_slot(request: CreateSlotRequest):
     return {"status": "OK", "slot": {"id": slot.id, "start_at": slot.start_at, "end_at": slot.end_at, "status": slot.status}}
 
 
+@app.post("/psychologist/slots/list")
+def psychologist_list_slots(request: TokenRequest):
+    claims = decode_token(request.token)
+    require_role(claims, "psychologist")
+    psych_id = int(claims.get("psychologist_id"))
+    now = datetime.now(timezone.utc)
+    with Session(engine) as session:
+        slots = session.execute(
+            select(AvailabilitySlot).where(
+                AvailabilitySlot.psychologist_id == psych_id,
+                AvailabilitySlot.start_at > now,
+                AvailabilitySlot.status == "open",
+            ).order_by(AvailabilitySlot.start_at.asc())
+        ).scalars().all()
+    return {
+        "status": "OK",
+        "slots": [
+            {
+                "id": slot.id,
+                "start_at": slot.start_at,
+                "end_at": slot.end_at,
+                "status": slot.status,
+            }
+            for slot in slots
+        ],
+    }
+
+
 @app.post("/student/slots/list")
 def list_open_slots(request: TokenRequest):
     claims = decode_token(request.token)
@@ -586,6 +614,20 @@ def book_slot(request: BookAppointmentRequest):
             raise HTTPException(status_code=404, detail="Slot not found")
         if slot.status != "open":
             raise HTTPException(status_code=409, detail="Slot already taken")
+            
+        overlap_exists = session.execute(
+            select(Appointment)
+            .join(AvailabilitySlot, AvailabilitySlot.id == Appointment.slot_id)
+            .where(
+                Appointment.student_id == student_id,
+                Appointment.status == "booked",
+                AvailabilitySlot.start_at < slot.end_at,
+                AvailabilitySlot.end_at > slot.start_at,
+            )
+        ).first()
+
+        if overlap_exists:
+            raise HTTPException(status_code=409, detail="You already have an overlapping appointment booked for this time.")
 
         appointment = Appointment(
             slot_id=slot.id,
@@ -722,6 +764,13 @@ def join_appointment_chat(request: AppointmentChatJoinRequest):
     claims = decode_token(request.token)
     with Session(engine) as session:
         appointment = get_appointment_for_claims(session, request.appointment_id, claims)
+        slot = session.execute(select(AvailabilitySlot).where(AvailabilitySlot.id == appointment.slot_id)).scalar_one()
+        now = datetime.now(timezone.utc)
+        if now < slot.start_at:
+            raise HTTPException(status_code=403, detail="Appointment has not started yet.")
+        if now > slot.end_at:
+            raise HTTPException(status_code=403, detail="Appointment has ended. Chat is closed.")
+
         chat_session = session.execute(
             select(ChatSession).where(ChatSession.appointment_id == appointment.id)
         ).scalar_one_or_none()
@@ -743,6 +792,13 @@ def send_chat_message(request: ChatMessageCreateRequest):
     claims = decode_token(request.token)
     with Session(engine) as session:
         appointment = get_appointment_for_claims(session, request.appointment_id, claims)
+        slot = session.execute(select(AvailabilitySlot).where(AvailabilitySlot.id == appointment.slot_id)).scalar_one()
+        now = datetime.now(timezone.utc)
+        if now < slot.start_at:
+            raise HTTPException(status_code=403, detail="Appointment has not started yet.")
+        if now > slot.end_at:
+            raise HTTPException(status_code=403, detail="Appointment has ended. Chat is closed.")
+
         chat_session = session.execute(
             select(ChatSession).where(ChatSession.appointment_id == appointment.id)
         ).scalar_one_or_none()
@@ -768,19 +824,28 @@ def list_chat_messages(request: AppointmentChatJoinRequest):
     claims = decode_token(request.token)
     with Session(engine) as session:
         appointment = get_appointment_for_claims(session, request.appointment_id, claims)
-        chat_session = session.execute(
-            select(ChatSession).where(ChatSession.appointment_id == appointment.id)
-        ).scalar_one_or_none()
-        if not chat_session:
+        student_id = appointment.student_id
+
+        student_appointments = session.execute(
+            select(Appointment.id).where(Appointment.student_id == student_id)
+        ).scalars().all()
+
+        chat_sessions = session.execute(
+            select(ChatSession.id).where(ChatSession.appointment_id.in_(student_appointments))
+        ).scalars().all()
+
+        if not chat_sessions:
             return {"status": "OK", "messages": []}
+
         messages = session.execute(
             select(ChatMessage)
-            .where(ChatMessage.session_id == chat_session.id)
+            .where(ChatMessage.session_id.in_(chat_sessions))
             .order_by(ChatMessage.sent_at.asc())
         ).scalars().all()
+
     return {
         "status": "OK",
-        "session_id": chat_session.id,
+        "session_id": chat_sessions[-1] if chat_sessions else None,
         "messages": [
             {
                 "id": m.id,

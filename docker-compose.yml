@@ -49,13 +49,13 @@ services:
     volumes:
       # Mounts local Hugging Face cache to avoid re-downloading models on every restart
       - ~/.cache/huggingface:/root/.cache/huggingface
-    # deploy:
-    #   resources:
-    #     reservations:
-    #       devices:
-    #         - driver: nvidia
-    #           count: 1
-    #           capabilities: [ gpu ]
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
     environment:
       - MODEL_NAME=Qwen/Qwen2.5-0.5B-Instruct
       - MAX_HISTORY_TOKENS=1000
