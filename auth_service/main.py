@@ -12,6 +12,7 @@ from sqlalchemy import (
     UniqueConstraint,
     create_engine,
     select,
+    func,
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column
 import hashlib
@@ -135,6 +136,27 @@ class StudentAiChatState(Base):
     history_ids_json: Mapped[str] = mapped_column(Text, nullable=False, default="[]")
     transcript_json: Mapped[str] = mapped_column(Text, nullable=False, default="[]")
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
+class ScreeningResult(Base):
+    __tablename__ = "screening_results"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    student_id: Mapped[str] = mapped_column(ForeignKey("students.student_id"), index=True, nullable=False)
+    score: Mapped[int] = mapped_column(Integer, nullable=False)
+    screening_type: Mapped[str] = mapped_column(String(50), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
+class Resource(Base):
+    __tablename__ = "resources"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    title: Mapped[str] = mapped_column(String(200), nullable=False)
+    description: Mapped[str] = mapped_column(Text, nullable=True)
+    resource_type: Mapped[str] = mapped_column(String(50), nullable=False)
+    url: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
 
 def hash_password(password: str, salt_hex: str) -> str:
@@ -283,6 +305,20 @@ class StudentAiChatUpdateRequest(BaseModel):
     history_ids: list[list[int]] = Field(default_factory=list)
     user_text: str = Field(..., min_length=1, max_length=4000)
     assistant_text: str = Field(..., min_length=1, max_length=10000)
+
+
+class AdminCreateResourceRequest(BaseModel):
+    token: str = Field(..., min_length=10)
+    title: str = Field(..., min_length=1, max_length=200)
+    description: str = Field(default="")
+    resource_type: str = Field(..., min_length=1, max_length=50)
+    url: str = Field(..., min_length=1, max_length=1000)
+
+
+class StudentScreeningRequest(BaseModel):
+    token: str = Field(..., min_length=10)
+    score: int = Field(...)
+    screening_type: str = Field(default="PHQ-9")
 
 
 def create_access_token(subject: dict) -> str:
@@ -803,3 +839,77 @@ def student_ai_chat_reset(request: TokenRequest):
         session.add(state)
         session.commit()
     return {"status": "OK"}
+
+
+@app.post("/admin/resources")
+def admin_create_resource(request: AdminCreateResourceRequest):
+    claims = decode_token(request.token)
+    require_role(claims, "admin")
+    with Session(engine) as session:
+        resource = Resource(
+            title=request.title.strip(),
+            description=request.description.strip(),
+            resource_type=request.resource_type.strip(),
+            url=request.url.strip(),
+            created_at=datetime.now(timezone.utc)
+        )
+        session.add(resource)
+        session.commit()
+        session.refresh(resource)
+    return {"status": "OK", "resource_id": resource.id}
+
+
+@app.post("/student/resources/list")
+def list_resources(request: TokenRequest):
+    claims = decode_token(request.token)
+    require_role(claims, "student")
+    with Session(engine) as session:
+        resources = session.execute(select(Resource).order_by(Resource.created_at.desc())).scalars().all()
+    return {
+        "status": "OK",
+        "resources": [
+            {
+                "id": r.id,
+                "title": r.title,
+                "description": r.description,
+                "resource_type": r.resource_type,
+                "url": r.url,
+            }
+            for r in resources
+        ]
+    }
+
+
+@app.post("/student/screening")
+def student_submit_screening(request: StudentScreeningRequest):
+    claims = decode_token(request.token)
+    require_role(claims, "student")
+    student_id = claims.get("sub")
+    with Session(engine) as session:
+        screening = ScreeningResult(
+            student_id=student_id,
+            score=request.score,
+            screening_type=request.screening_type,
+            created_at=datetime.now(timezone.utc)
+        )
+        session.add(screening)
+        session.commit()
+    return {"status": "OK"}
+
+
+@app.post("/admin/analytics")
+def admin_analytics(request: TokenRequest):
+    claims = decode_token(request.token)
+    require_role(claims, "admin")
+    with Session(engine) as session:
+        total_students = session.execute(select(func.count(Student.student_id))).scalar() or 0
+        total_appointments = session.execute(select(func.count(Appointment.id))).scalar() or 0
+        total_psychologists = session.execute(select(func.count(Psychologist.id))).scalar() or 0
+        avg_score = session.execute(select(func.avg(ScreeningResult.score))).scalar() or 0.0
+    return {
+        "status": "OK",
+        "total_students": total_students,
+        "total_appointments": total_appointments,
+        "total_psychologists": total_psychologists,
+        "average_screening_score": round(float(avg_score), 1)
+    }

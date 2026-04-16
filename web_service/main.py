@@ -73,6 +73,18 @@ class AppointmentChatMessageInput(BaseModel):
     body: str = Field(..., min_length=1, max_length=4000)
 
 
+class StudentScreeningInput(BaseModel):
+    score: int
+    screening_type: str = Field(default="PHQ-9")
+
+
+class AdminCreateResourceInput(BaseModel):
+    title: str
+    description: str = Field(default="")
+    resource_type: str
+    url: str
+
+
 async def verify_student_token(token: str) -> dict:
     async with httpx.AsyncClient(timeout=10.0) as client:
         response = await client.post(f"{AUTH_SERVICE_URL}/auth/verify", json={"token": token})
@@ -131,6 +143,16 @@ async def admin_dashboard_page(request: Request):
 @app.get("/appointments/chat/{appointment_id}", response_class=HTMLResponse)
 async def appointment_chat_page(request: Request, appointment_id: int):
     return templates.TemplateResponse("appointment_chat.html", {"request": request, "appointment_id": appointment_id})
+
+
+@app.get("/resources", response_class=HTMLResponse)
+async def resources_page(request: Request):
+    return templates.TemplateResponse("resources.html", {"request": request})
+
+
+@app.get("/screening", response_class=HTMLResponse)
+async def screening_page(request: Request):
+    return templates.TemplateResponse("screening.html", {"request": request})
 
 
 @app.post("/api/login")
@@ -493,3 +515,71 @@ async def chat_proxy(request: Request, input_data: ChatInput):
                     "status": "ERROR",
                 },
             )
+
+
+@app.post("/api/student/screening")
+async def student_screening(request: Request, input_data: StudentScreeningInput):
+    try:
+        token = await get_token_or_401(request)
+    except HTTPException:
+        return JSONResponse(status_code=401, content={"status": "ERROR", "message": "Not authenticated"})
+    async with httpx.AsyncClient(timeout=15.0) as client:
+        try:
+            response = await client.post(
+                f"{AUTH_SERVICE_URL}/student/screening",
+                json={"token": token, "score": input_data.score, "screening_type": input_data.screening_type},
+            )
+            return JSONResponse(status_code=response.status_code, content=response.json())
+        except (httpx.HTTPStatusError, httpx.RequestError):
+             return JSONResponse(status_code=502, content={"status": "ERROR", "message": "Failed to submit screening."})
+
+
+@app.get("/api/student/resources")
+async def get_student_resources(request: Request):
+    try:
+        token = await get_token_or_401(request)
+    except HTTPException:
+        return JSONResponse(status_code=401, content={"status": "ERROR", "message": "Not authenticated"})
+    async with httpx.AsyncClient(timeout=15.0) as client:
+        try:
+            response = await client.post(f"{AUTH_SERVICE_URL}/student/resources/list", json={"token": token})
+            return JSONResponse(status_code=response.status_code, content=response.json())
+        except (httpx.HTTPStatusError, httpx.RequestError):
+             return JSONResponse(status_code=502, content={"status": "ERROR", "message": "Failed to fetch resources."})
+
+
+@app.post("/api/admin/resources")
+async def create_resource(request: Request, input_data: AdminCreateResourceInput):
+    try:
+        token = await get_token_or_401(request)
+    except HTTPException:
+        return JSONResponse(status_code=401, content={"status": "ERROR", "message": "Not authenticated"})
+    async with httpx.AsyncClient(timeout=15.0) as client:
+        try:
+            response = await client.post(
+                f"{AUTH_SERVICE_URL}/admin/resources",
+                json={
+                    "token": token,
+                    "title": input_data.title,
+                    "description": input_data.description,
+                    "resource_type": input_data.resource_type,
+                    "url": input_data.url
+                },
+            )
+            return JSONResponse(status_code=response.status_code, content=response.json())
+        except (httpx.HTTPStatusError, httpx.RequestError):
+             return JSONResponse(status_code=502, content={"status": "ERROR", "message": "Failed to create resource."})
+
+
+@app.get("/api/admin/analytics")
+async def admin_analytics(request: Request):
+    try:
+        token = await get_token_or_401(request)
+    except HTTPException:
+        return JSONResponse(status_code=401, content={"status": "ERROR", "message": "Not authenticated"})
+    async with httpx.AsyncClient(timeout=15.0) as client:
+        try:
+            response = await client.post(f"{AUTH_SERVICE_URL}/admin/analytics", json={"token": token})
+            return JSONResponse(status_code=response.status_code, content=response.json())
+        except (httpx.HTTPStatusError, httpx.RequestError):
+             return JSONResponse(status_code=502, content={"status": "ERROR", "message": "Failed to fetch analytics."})

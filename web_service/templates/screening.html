@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PHQ-9 Screening Form - MindBridge</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 min-h-screen py-10 px-4">
+    <div class="max-w-3xl mx-auto">
+        <div class="mb-6 flex items-center justify-between">
+            <h1 class="text-3xl font-extrabold text-slate-800 tracking-tight">Psychological Screening</h1>
+            <a href="/student/dashboard" class="px-4 py-2 bg-white text-teal-700 font-medium border border-slate-200 rounded-lg shadow-sm hover:bg-slate-50 transition">Exit to Dashboard</a>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
+            <h2 class="text-xl font-bold text-slate-800 mb-2">Patient Health Questionnaire (PHQ-9)</h2>
+            <p class="mb-6 text-slate-600">Over the last 2 weeks, how often have you been bothered by any of the following problems?</p>
+            
+            <form id="screening-form" class="space-y-6">
+                <div id="questions-container" class="space-y-5"></div>
+                
+                <div class="pt-4 mt-6 border-t border-slate-100">
+                    <button type="submit" class="w-full md:w-auto px-8 py-3 bg-teal-600 text-white rounded-xl font-semibold shadow-sm hover:bg-teal-700 hover:shadow transform hover:-translate-y-0.5 transition-all outline-none focus:ring-4 focus:ring-teal-200">
+                        Submit Screening
+                    </button>
+                    <p class="text-xs text-slate-400 mt-3 text-center md:text-left">By submitting, your anonymized score may be used by the institution to aggregate wellness trends.</p>
+                </div>
+            </form>
+
+            <div id="result-box" class="hidden mt-8 p-6 rounded-2xl bg-gradient-to-br from-teal-50 to-emerald-50 border border-teal-100">
+                <div class="flex items-center space-x-3 mb-2">
+                    <svg class="w-8 h-8 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <h2 class="font-bold text-teal-900 text-xl">Screening Submitted Successfully</h2>
+                </div>
+                <div class="mt-4 bg-white/60 p-4 rounded-xl border border-teal-100 shadow-sm">
+                    <p id="score-text" class="text-teal-800 leading-relaxed"></p>
+                </div>
+                <div class="mt-6 flex space-x-4">
+                    <a href="/resources" class="px-5 py-2.5 bg-teal-600 hover:bg-teal-700 text-white font-medium rounded-lg transition-colors">Visit Resource Hub</a>
+                    <a href="/chat" class="px-5 py-2.5 bg-white text-teal-700 border border-teal-200 font-medium rounded-lg hover:bg-teal-50 transition-colors">Talk to AI Peer</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const questions = [
+            "Little interest or pleasure in doing things.",
+            "Feeling down, depressed, or hopeless.",
+            "Trouble falling or staying asleep, or sleeping too much.",
+            "Feeling tired or having little energy.",
+            "Poor appetite or overeating.",
+            "Feeling bad about yourself, or that you are a failure or have let yourself or your family down.",
+            "Trouble concentrating on things, such as reading the newspaper or watching television.",
+            "Moving or speaking so slowly that other people could have noticed. Or the opposite, being so fidgety or restless that you have been moving around a lot more than usual.",
+            "Thoughts that you would be better off dead, or of hurting yourself in some way."
+        ];
+        
+        const options = [
+            { text: "Not at all", value: 0 },
+            { text: "Several days", value: 1 },
+            { text: "More than half the days", value: 2 },
+            { text: "Nearly every day", value: 3 }
+        ];
+
+        const container = document.getElementById('questions-container');
+        questions.forEach((q, i) => {
+            const div = document.createElement('div');
+            div.className = 'p-5 rounded-xl border border-slate-100 bg-slate-50/50 hover:bg-white hover:shadow-sm hover:border-slate-200 transition-all';
+            
+            let html = `<p class="font-semibold text-slate-800 mb-4">${i + 1}. ${q}</p><div class="grid grid-cols-1 md:grid-cols-4 gap-3">`;
+            options.forEach(opt => {
+                html += `
+                    <label class="flex items-center p-3 border border-slate-200 rounded-lg cursor-pointer bg-white hover:border-teal-400 hover:bg-teal-50/30 transition-colors group">
+                        <input type="radio" name="q${i}" value="${opt.value}" required class="w-4 h-4 text-teal-600 border-slate-300 focus:ring-teal-500">
+                        <span class="ml-3 text-sm font-medium text-slate-700 group-hover:text-teal-800">${opt.text}</span>
+                    </label>
+                `;
+            });
+            html += `</div>`;
+            div.innerHTML = html;
+            container.appendChild(div);
+        });
+
+        document.getElementById('screening-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            let score = 0;
+            for (let i = 0; i < questions.length; i++) {
+                const val = formData.get(`q${i}`);
+                if (val) score += parseInt(val, 10);
+            }
+
+            const btn = e.target.querySelector('button[type="submit"]');
+            const originalText = btn.textContent;
+            btn.disabled = true;
+            btn.innerHTML = 'Submitting...';
+
+            const resp = await fetch('/api/student/screening', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ score: score, screening_type: 'PHQ-9' })
+            });
+
+            if (resp.ok) {
+                e.target.style.display = 'none';
+                const resultBox = document.getElementById('result-box');
+                resultBox.classList.remove('hidden');
+                
+                let severity = "";
+                if (score <= 4) severity = "Minimal depression";
+                else if (score <= 9) severity = "Mild depression";
+                else if (score <= 14) severity = "Moderate depression";
+                else if (score <= 19) severity = "Moderately severe depression";
+                else severity = "Severe depression";
+                
+                document.getElementById('score-text').innerHTML = `Your PHQ-9 Severity Index is <strong class="text-2xl ml-1 text-teal-900">${score}/27</strong> <br><span class="inline-block mt-2 font-semibold">Indication: ${severity}.</span> <br><br>While this is not a clinical diagnosis, tracking your feelings is a great first step. If you're feeling overwhelmed, our resources or a short chat with an on-campus counselor can make a world of difference.`;
+            } else {
+                alert("Failed to submit screening. Please try again.");
+                btn.disabled = false;
+                btn.textContent = originalText;
+            }
+        });
+    </script>
+</body>
+</html>
