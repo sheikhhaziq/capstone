@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, StreamingResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 import httpx
 import os
@@ -11,6 +12,7 @@ app = FastAPI()
 logger = logging.getLogger(__name__)
 
 templates = Jinja2Templates(directory="templates")
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 AI_SERVICE_URL = os.getenv("AI_SERVICE_URL", "http://ai_service:8001/chat/")
 AUTH_SERVICE_URL = os.getenv("AUTH_SERVICE_URL", "http://auth_service:8002")
@@ -108,7 +110,7 @@ async def signup_page(request: Request):
 
 @app.get("/chat", response_class=HTMLResponse)
 async def chat_page(request: Request):
-    return templates.TemplateResponse("chat.html", {"request": request})
+    return templates.TemplateResponse("chat.html", {"request": request, "forum_url": FORUM_PUBLIC_URL})
 
 
 @app.get("/student/dashboard", response_class=HTMLResponse)
@@ -146,12 +148,12 @@ async def appointment_chat_page(request: Request, appointment_id: int):
 
 @app.get("/resources", response_class=HTMLResponse)
 async def resources_page(request: Request):
-    return templates.TemplateResponse("resources.html", {"request": request})
+    return templates.TemplateResponse("resources.html", {"request": request, "forum_url": FORUM_PUBLIC_URL})
 
 
 @app.get("/screening", response_class=HTMLResponse)
 async def screening_page(request: Request):
-    return templates.TemplateResponse("screening.html", {"request": request})
+    return templates.TemplateResponse("screening.html", {"request": request, "forum_url": FORUM_PUBLIC_URL})
 
 
 @app.post("/api/login")
@@ -606,3 +608,31 @@ async def admin_analytics(request: Request):
             return JSONResponse(status_code=response.status_code, content=response.json())
         except (httpx.HTTPStatusError, httpx.RequestError):
              return JSONResponse(status_code=502, content={"status": "ERROR", "message": "Failed to fetch analytics."})
+
+
+@app.get("/api/admin/users")
+async def admin_users(request: Request):
+    try:
+        token = await get_token_or_401(request)
+    except HTTPException:
+        return JSONResponse(status_code=401, content={"status": "ERROR", "message": "Not authenticated"})
+    async with httpx.AsyncClient(timeout=15.0) as client:
+        try:
+            response = await client.post(f"{AUTH_SERVICE_URL}/admin/students/list", json={"token": token})
+            return JSONResponse(status_code=response.status_code, content=response.json())
+        except (httpx.HTTPStatusError, httpx.RequestError):
+             return JSONResponse(status_code=502, content={"status": "ERROR", "message": "Failed to fetch student registry."})
+
+
+@app.get("/api/psychologist/analytics")
+async def psychologist_analytics_gateway(request: Request):
+    try:
+        token = await get_token_or_401(request)
+    except HTTPException:
+        return JSONResponse(status_code=401, content={"status": "ERROR", "message": "Not authenticated"})
+    async with httpx.AsyncClient(timeout=15.0) as client:
+        try:
+            response = await client.post(f"{AUTH_SERVICE_URL}/psychologist/analytics", json={"token": token})
+            return JSONResponse(status_code=response.status_code, content=response.json())
+        except (httpx.HTTPStatusError, httpx.RequestError):
+             return JSONResponse(status_code=502, content={"status": "ERROR", "message": "Failed to fetch psychologist analytics."})

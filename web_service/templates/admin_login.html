@@ -3,39 +3,88 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Login</title>
+    <title>MindBridge — Admin Login</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/static/css/theme.css">
+    <script src="/static/js/theme.js"></script>
 </head>
-<body class="bg-slate-100 min-h-screen flex items-center justify-center p-4">
-    <div class="w-full max-w-md bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-        <h1 class="text-2xl font-bold text-slate-800">Admin Login</h1>
-        <div class="mt-5 space-y-3">
-            <input id="admin-id" type="text" placeholder="Admin ID"
-                class="w-full bg-slate-100 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500">
-            <input id="password" type="password" placeholder="Password"
-                class="w-full bg-slate-100 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500">
-            <button onclick="login()"
-                class="w-full bg-teal-600 hover:bg-teal-700 text-white rounded-xl py-3 text-sm font-medium">Login</button>
+<body class="min-h-screen flex items-center justify-center p-4 overflow-hidden">
+    <button id="theme-toggle" class="theme-toggle" title="Toggle Theme">
+        <span id="theme-toggle-icon">☀️</span>
+    </button>
+
+    <div class="w-full max-w-md glass-card p-8 relative z-10">
+        <div class="mb-8 text-center">
+            <h1 class="text-4xl font-bold mb-2 gradient-text">MindBridge</h1>
+            <p class="text-secondary font-medium uppercase tracking-widest text-xs">Administrative Portal</p>
         </div>
-        <p id="message" class="text-sm mt-3 text-red-600"></p>
+
+        <h2 class="text-xl font-bold mb-6">Administrator Login</h2>
+        
+        <div class="space-y-4">
+            <div class="space-y-1">
+                <label class="text-xs font-semibold px-1 uppercase tracking-wider text-muted">System ID</label>
+                <input id="admin-id" type="text" placeholder="Enter Admin UID" class="w-full">
+            </div>
+            <div class="space-y-1">
+                <label class="text-xs font-semibold px-1 uppercase tracking-wider text-muted">Password</label>
+                <input id="password" type="password" placeholder="••••••••" class="w-full">
+            </div>
+            
+            <button onclick="login()" class="w-full btn-premium mt-4">
+                <span>Sign In</span>
+                <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+            </button>
+        </div>
+
+        <p id="message" class="text-sm mt-4 text-rose-500 font-medium text-center h-5"></p>
+
+        <div class="mt-8 pt-6 border-t border-white/10 text-center">
+            <a href="/login" class="text-xs text-muted hover:text-primary transition-colors flex items-center justify-center">
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                Back to Student Portal
+            </a>
+        </div>
     </div>
+
     <script>
         async function login() {
             const admin_id = document.getElementById('admin-id').value.trim();
             const password = document.getElementById('password').value.trim();
             const message = document.getElementById('message');
+            const btn = document.querySelector('.btn-premium');
+            
             message.textContent = '';
-            const response = await fetch('/api/admin/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ admin_id, password })
-            });
-            const data = await response.json();
-            if (response.ok && data.status === 'OK') {
-                window.location.href = '/admin/dashboard';
+            
+            if (!admin_id || !password) {
+                message.textContent = 'Credentials required.';
                 return;
             }
-            message.textContent = data.message || 'Login failed.';
+
+            btn.disabled = true;
+            btn.style.opacity = '0.7';
+            btn.innerHTML = '<span>Verifying...</span>';
+
+            try {
+                const response = await fetch('/api/admin/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ admin_id, password })
+                });
+                const data = await response.json();
+                
+                if (response.ok && data.status === 'OK') {
+                    window.location.href = '/admin/dashboard';
+                    return;
+                }
+                message.textContent = data.message || 'Access denied.';
+            } catch (error) {
+                message.textContent = 'Authorization server offline.';
+            } finally {
+                btn.disabled = false;
+                btn.style.opacity = '1';
+                btn.innerHTML = '<span>Sign In</span><svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>';
+            }
         }
     </script>
 </body>

@@ -10,6 +10,7 @@ import secrets
 from fastapi import FastAPI, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, create_engine, select
 from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column, relationship
 
@@ -21,9 +22,11 @@ DATABASE_URL = os.getenv(
 )
 PEER_COOKIE = os.getenv("FORUM_PEER_COOKIE", "forum_peer_id")
 PEER_COOKIE_MAX_AGE = int(os.getenv("FORUM_PEER_COOKIE_MAX_AGE", 60 * 60 * 24 * 180))
+WEB_PUBLIC_URL = os.getenv("WEB_PUBLIC_URL", "http://localhost:8000")
 
 engine = create_engine(DATABASE_URL, pool_pre_ping=True)
 templates = Jinja2Templates(directory="templates")
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
 class Base(DeclarativeBase):
@@ -87,6 +90,7 @@ def forum_home(request: Request):
                 "request": request,
                 "peer_label": peer_display_label(peer_secret),
                 "threads": threads,
+                "web_url": WEB_PUBLIC_URL,
             },
         )
         return resp
@@ -97,6 +101,7 @@ def forum_home(request: Request):
             "request": request,
             "peer_label": peer_display_label(peer_secret),
             "threads": threads,
+            "web_url": WEB_PUBLIC_URL,
         },
     )
     resp.set_cookie(
@@ -170,6 +175,7 @@ def thread_detail(request: Request, thread_id: int):
                 "peer_label": peer_display_label(peer_secret),
                 "thread": thread,
                 "posts": posts,
+                "web_url": WEB_PUBLIC_URL,
             },
         )
     peer_secret = secrets.token_urlsafe(24)
@@ -180,6 +186,7 @@ def thread_detail(request: Request, thread_id: int):
             "peer_label": peer_display_label(peer_secret),
             "thread": thread,
             "posts": posts,
+            "web_url": WEB_PUBLIC_URL,
         },
     )
     resp.set_cookie(

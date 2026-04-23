@@ -3,27 +3,52 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MindSpace Signup</title>
+    <title>MindBridge — Sign Up</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/static/css/theme.css">
+    <script src="/static/js/theme.js"></script>
 </head>
-<body class="bg-slate-100 min-h-screen flex items-center justify-center p-4">
-    <div class="w-full max-w-md bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-        <h1 class="text-2xl font-bold text-slate-800">Create Student Account</h1>
-        <p class="text-sm text-slate-500 mt-1">Sign up to start using MindSpace.</p>
-        <div class="mt-5 space-y-3">
-            <input id="student-id" type="text" placeholder="Student ID"
-                class="w-full bg-slate-100 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500">
-            <input id="name" type="text" placeholder="Full Name"
-                class="w-full bg-slate-100 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500">
-            <input id="password" type="password" placeholder="Password"
-                class="w-full bg-slate-100 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500">
-            <button onclick="signup()"
-                class="w-full bg-teal-600 hover:bg-teal-700 text-white rounded-xl py-3 text-sm font-medium">Sign Up</button>
+<body class="min-h-screen flex items-center justify-center p-4 overflow-hidden">
+    <button id="theme-toggle" class="theme-toggle" title="Toggle Theme">
+        <span id="theme-toggle-icon">☀️</span>
+    </button>
+
+    <div class="w-full max-w-md glass-card p-8 relative z-10">
+        <div class="mb-8 text-center">
+            <h1 class="text-4xl font-bold gradient-text mb-2">MindBridge</h1>
+            <p class="text-secondary">Start your wellness journey today.</p>
         </div>
-        <p id="message" class="text-sm mt-3"></p>
-        <p class="text-sm text-slate-600 mt-4">Already have an account?
-            <a href="/login" class="text-teal-700 font-semibold hover:underline">Login</a>
-        </p>
+
+        <h2 class="text-xl font-bold mb-6">Create Account</h2>
+        
+        <div class="space-y-4">
+            <div class="space-y-1">
+                <label class="text-xs font-semibold px-1 uppercase tracking-wider text-muted">Full Name</label>
+                <input id="name" type="text" placeholder="John Doe" class="w-full">
+            </div>
+            <div class="space-y-1">
+                <label class="text-xs font-semibold px-1 uppercase tracking-wider text-muted">Student ID</label>
+                <input id="student-id" type="text" placeholder="ID Number" class="w-full">
+            </div>
+            <div class="space-y-1">
+                <label class="text-xs font-semibold px-1 uppercase tracking-wider text-muted">Password</label>
+                <input id="password" type="password" placeholder="••••••••" class="w-full">
+            </div>
+            
+            <button onclick="signup()" class="w-full btn-premium mt-4">
+                <span>Create Account</span>
+                <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
+            </button>
+        </div>
+
+        <p id="message" class="text-sm mt-4 font-medium text-center h-5"></p>
+
+        <div class="mt-8 pt-6 border-t border-white/10 text-center">
+            <p class="text-sm text-secondary">
+                Already have an account? 
+                <a href="/login" class="text-accent-indigo font-bold hover:underline">Log in</a>
+            </p>
+        </div>
     </div>
 
     <script>
@@ -32,14 +57,20 @@
             const name = document.getElementById('name').value.trim();
             const password = document.getElementById('password').value.trim();
             const message = document.getElementById('message');
+            const btn = document.querySelector('.btn-premium');
+            
             message.textContent = '';
-            message.className = 'text-sm mt-3';
+            message.className = 'text-sm mt-4 font-medium text-center h-5';
 
             if (!student_id || !name || !password) {
-                message.classList.add('text-red-600');
-                message.textContent = 'Please fill all fields.';
+                message.classList.add('text-rose-500');
+                message.textContent = 'Please complete all fields.';
                 return;
             }
+
+            btn.disabled = true;
+            btn.style.opacity = '0.7';
+            btn.innerHTML = '<span>Processing...</span>';
 
             try {
                 const response = await fetch('/api/signup', {
@@ -48,17 +79,24 @@
                     body: JSON.stringify({ student_id, name, password })
                 });
                 const data = await response.json();
+                
                 if (response.status === 201) {
-                    message.classList.add('text-green-700');
-                    message.textContent = 'Signup successful. Redirecting to login...';
-                    setTimeout(() => { window.location.href = '/login'; }, 900);
+                    message.classList.add('text-emerald-500');
+                    message.textContent = 'Welcome! Redirecting to login...';
+                    setTimeout(() => { window.location.href = '/login'; }, 1000);
                     return;
                 }
-                message.classList.add('text-red-600');
-                message.textContent = data.message || 'Signup failed.';
+                message.classList.add('text-rose-500');
+                message.textContent = data.message || 'Registration failed.';
             } catch (error) {
-                message.classList.add('text-red-600');
-                message.textContent = 'Unable to connect to server.';
+                message.classList.add('text-rose-500');
+                message.textContent = 'Network error. Please try again.';
+            } finally {
+                if (!message.classList.contains('text-emerald-500')) {
+                    btn.disabled = false;
+                    btn.style.opacity = '1';
+                    btn.innerHTML = '<span>Create Account</span><svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>';
+                }
             }
         }
     </script>

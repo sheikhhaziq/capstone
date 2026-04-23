@@ -3,53 +3,122 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MindSpace Chat</title>
+    <title>MindBridge — AI Support</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.9/dist/purify.min.js"></script>
+    <link rel="stylesheet" href="/static/css/theme.css">
+    <script src="/static/js/theme.js"></script>
+    <style>
+        .chat-bubble-user {
+            background: var(--gradient-primary);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+        .chat-bubble-ai {
+            background: var(--glass-bg);
+            backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--glass-border);
+            border-bottom-left-radius: 4px;
+        }
+        [data-theme="light"] .chat-bubble-ai {
+            background: rgba(255, 255, 255, 0.8);
+        }
+        .chat-scroll::-webkit-scrollbar { width: 4px; }
+        .chat-scroll::-webkit-scrollbar-thumb { background: var(--glass-border); border-radius: 10px; }
+    </style>
 </head>
-<body class="bg-slate-50 h-screen flex flex-col font-sans text-slate-800">
-    <header class="bg-white shadow-sm p-4 flex items-center justify-between z-10">
-        <div class="flex items-center gap-3">
-            <div class="bg-teal-100 p-2 rounded-full">
-                <i class="fa-solid fa-leaf text-teal-600 text-xl"></i>
+<body class="fade-in overflow-hidden">
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="mb-10 px-2 text-center md:text-left">
+                <h1 class="text-2xl font-black gradient-text tracking-tighter uppercase">MindBridge</h1>
+                <p class="text-[10px] font-bold text-muted uppercase tracking-[0.2em] mt-1 italic">Mental Wellness Hub</p>
             </div>
-            <div>
-                <h1 class="font-bold text-xl text-slate-800">MindSpace</h1>
-                <p class="text-xs text-slate-500">AI Student Support</p>
-            </div>
-        </div>
-        <div class="flex items-center gap-3">
-            <button onclick="clearChatHistory()" class="text-sm text-slate-400 hover:text-red-500 transition" title="Clear Chat History">
-                <i class="fa-solid fa-trash-can mr-1"></i> Clear History
-            </button>
-            <span id="auth-status" class="text-xs text-slate-500"></span>
-            <button onclick="logout()" class="text-sm text-slate-400 hover:text-red-500 transition">
-                <i class="fa-solid fa-right-from-bracket mr-1"></i> Logout
-            </button>
-        </div>
-    </header>
 
-    <main id="chat-container" class="flex-1 overflow-y-auto p-4 space-y-4">
-        <div class="flex justify-start">
-            <div class="bg-white border border-slate-100 rounded-2xl rounded-tl-none p-4 shadow-sm max-w-[85%] md:max-w-[70%]">
-                <p class="text-sm leading-relaxed">Hello! I am here to listen without judgment. How are you feeling today?</p>
-            </div>
-        </div>
-    </main>
+            <nav class="flex-1 space-y-1">
+                <a href="/student/dashboard" class="nav-link">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                    Overview
+                </a>
+                <a href="/chat" class="nav-link active">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
+                    AI Chat
+                </a>
+                <a href="{{ forum_url }}/forum" class="nav-link">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                    Peer Forum
+                </a>
+                <a href="/resources" class="nav-link">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                    Resources
+                </a>
+                <a href="/screening" class="nav-link">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+                    Screening
+                </a>
+            </nav>
 
-    <footer class="bg-white p-4 border-t border-slate-100">
-        <div class="max-w-4xl mx-auto relative flex items-center gap-2">
-            <input type="text" id="user-input"
-                class="w-full bg-slate-100 rounded-full pl-6 pr-12 py-4 focus:outline-none focus:ring-2 focus:ring-teal-500 transition shadow-inner text-sm"
-                placeholder="Type how you feel..." onkeypress="if(event.key==='Enter') sendMessage()">
-            <button onclick="sendMessage()"
-                class="absolute right-2 bg-teal-600 hover:bg-teal-700 text-white p-3 rounded-full shadow-md transition">
-                <i class="fa-solid fa-paper-plane"></i>
-            </button>
-        </div>
-    </footer>
+            <div class="pt-10 mt-10 border-t border-white/5">
+                <button onclick="logout()" class="nav-link text-rose-500 w-full text-left font-bold">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                    Logout
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content flex flex-col h-screen overflow-hidden !pb-0">
+             <!-- Mobile Header -->
+             <header class="lg:hidden flex items-center justify-between mb-4">
+                 <h1 class="text-xl font-black gradient-text tracking-tighter uppercase">MindBridge</h1>
+                 <button id="mobile-menu-toggle" class="p-2 glass-card rounded-lg">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+                 </button>
+            </header>
+
+            <div class="flex items-center justify-between mb-6">
+                <div>
+                    <h2 class="text-2xl font-black tracking-tight uppercase">AI Support</h2>
+                    <p id="auth-status" class="text-[10px] font-bold text-muted uppercase tracking-widest mt-1 opacity-60">Secure Session Active</p>
+                </div>
+                <button onclick="clearChatHistory()" class="px-4 py-2 glass-card text-[10px] font-black uppercase tracking-widest text-rose-500 hover:bg-rose-500 hover:text-white transition-all">
+                    Clear History
+                </button>
+            </div>
+
+            <!-- Chat Area -->
+            <div id="chat-container" class="flex-1 overflow-y-auto chat-scroll space-y-8 pb-10 pr-4">
+                <div class="flex justify-start">
+                    <div class="chat-bubble-ai glass-card rounded-3xl p-6 shadow-2xl max-w-[85%] border-accent-indigo/10">
+                        <p class="text-sm leading-relaxed">Welcome back. I am your MindBridge AI companion, here to listen and support your well-being. How can I help you today?</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Input Area -->
+            <div class="py-10">
+                <div class="relative group max-w-4xl mx-auto">
+                    <div class="absolute -inset-1 bg-gradient-primary rounded-[2.5rem] blur opacity-10 group-focus-within:opacity-30 transition duration-1000"></div>
+                    <div class="relative flex items-center glass-card rounded-[2.5rem] overflow-hidden border-white/10 p-2">
+                        <input type="text" id="user-input"
+                            class="!border-0 !bg-transparent !shadow-none pl-6 pr-16 py-4 focus:outline-none text-sm placeholder:text-muted/50"
+                            placeholder="Type your state of mind..." onkeypress="if(event.key==='Enter') sendMessage()">
+                        <button onclick="sendMessage()"
+                            class="absolute right-3 btn-premium !p-3 !rounded-full">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7m0 0l-7 7m7-7H6"></path></svg>
+                        </button>
+                    </div>
+                </div>
+                <p class="text-[9px] text-center text-muted mt-4 uppercase tracking-[0.25em] font-bold opacity-40 italic">MindBridge Chat: Secure and Confidential Support Channel</p>
+            </div>
+        </main>
+    </div>
+
+    <button id="theme-toggle" class="theme-toggle" title="Toggle Theme">
+        <span id="theme-toggle-icon">☀️</span>
+    </button>
 
     <script>
         const chatContainer = document.getElementById('chat-container');
@@ -58,12 +127,9 @@
 
         async function requireSession() {
             const response = await fetch('/api/session');
-            if (!response.ok) {
-                window.location.href = '/login';
-                return;
-            }
+            if (!response.ok) { window.location.href = '/login'; return; }
             const data = await response.json();
-            authStatus.textContent = `Logged in as ${data.user.student_id || 'student'}`;
+            authStatus.textContent = `AUTHENTICATED: ${data.user.name || 'Anonymous'}`;
         }
 
         async function loadPreviousConversation() {
@@ -78,19 +144,18 @@
 
         function addMessage(text, isUser) {
             const div = document.createElement('div');
-            div.className = `flex ${isUser ? 'justify-end' : 'justify-start'}`;
+            div.className = `flex ${isUser ? 'justify-end' : 'justify-start'} animate-in fade-in slide-in-from-${isUser ? 'right' : 'left'}-4 duration-300`;
             const bubble = document.createElement('div');
             bubble.className = isUser
-                ? 'bg-teal-600 text-white rounded-2xl rounded-tr-none p-4 shadow-md max-w-[85%] md:max-w-[70%] text-sm'
-                : 'bg-white border border-slate-100 rounded-2xl rounded-tl-none p-4 shadow-sm max-w-[85%] md:max-w-[70%] text-sm leading-relaxed prose';
-            if (isUser) {
-                bubble.textContent = text;
-            } else {
-                bubble.innerHTML = DOMPurify.sanitize(marked.parse(text));
-            }
+                ? 'chat-bubble-user rounded-3xl p-6 shadow-xl max-w-[85%] text-sm leading-relaxed border border-white/10'
+                : 'chat-bubble-ai glass-card rounded-3xl p-6 shadow-2xl max-w-[85%] text-sm leading-relaxed prose prose-indigo max-w-none dark:prose-invert';
+            
+            if (isUser) { bubble.textContent = text; } 
+            else { bubble.innerHTML = DOMPurify.sanitize(marked.parse(text)); }
+            
             div.appendChild(bubble);
             chatContainer.appendChild(div);
-            chatContainer.scrollTop = chatContainer.scrollHeight;
+            chatContainer.scrollTo({ top: chatContainer.scrollHeight, behavior: 'smooth' });
         }
 
         async function sendMessage() {
@@ -99,15 +164,14 @@
             addMessage(text, true);
             userInput.value = '';
 
-            // Add placeholder for assistant response
             const responseDiv = document.createElement('div');
-            responseDiv.className = 'flex justify-start';
+            responseDiv.className = 'flex justify-start animate-in fade-in duration-300';
             const bubble = document.createElement('div');
-            bubble.className = 'bg-white border border-slate-100 rounded-2xl rounded-tl-none p-4 shadow-sm max-w-[85%] md:max-w-[70%] text-sm leading-relaxed prose';
-            bubble.innerHTML = '<span class="animate-pulse">...</span>';
+            bubble.className = 'chat-bubble-ai glass-card rounded-3xl p-6 shadow-2xl max-w-[85%] text-sm leading-relaxed';
+            bubble.innerHTML = '<div class="flex gap-1"><span class="w-1.5 h-1.5 bg-accent-indigo rounded-full animate-bounce"></span><span class="w-1.5 h-1.5 bg-accent-indigo rounded-full animate-bounce [animation-delay:0.2s]"></span><span class="w-1.5 h-1.5 bg-accent-indigo rounded-full animate-bounce [animation-delay:0.4s]"></span></div>';
             responseDiv.appendChild(bubble);
             chatContainer.appendChild(responseDiv);
-            chatContainer.scrollTop = chatContainer.scrollHeight;
+            chatContainer.scrollTo({ top: chatContainer.scrollHeight, behavior: 'smooth' });
 
             try {
                 const response = await fetch('/api/chat', {
@@ -115,84 +179,46 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ text, history_ids: [] })
                 });
-
-                if (response.status === 401) {
-                    window.location.href = '/login';
-                    return;
-                }
-
-                if (!response.ok) {
-                    bubble.textContent = 'I am having trouble right now.';
-                    return;
-                }
+                if (response.status === 401) { window.location.href = '/login'; return; }
+                if (!response.ok) { bubble.textContent = 'Connection error. Please try again.'; return; }
 
                 const reader = response.body.getReader();
                 const decoder = new TextDecoder();
                 let fullText = "";
-                bubble.innerHTML = ""; // Clear the pulse
+                bubble.innerHTML = ""; 
 
                 while (true) {
                     const { value, done } = await reader.read();
                     if (done) break;
-                    
                     const chunk = decoder.decode(value, { stream: true });
                     const lines = chunk.split('\n');
-                    
                     for (const line of lines) {
                         if (!line.trim()) continue;
                         try {
                             const data = JSON.parse(line);
-                            if (data.text) {
-                                fullText += data.text;
-                                // Sanitize and parse markdown
+                            if (data.text || data.response) {
+                                fullText += (data.text || data.response);
                                 bubble.innerHTML = DOMPurify.sanitize(marked.parse(fullText));
                                 chatContainer.scrollTop = chatContainer.scrollHeight;
                             }
-                            if (data.response) { // Crisis alert block
-                                fullText = data.response;
-                                bubble.innerHTML = DOMPurify.sanitize(marked.parse(fullText));
-                                chatContainer.scrollTop = chatContainer.scrollHeight;
-                            }
-                        } catch (e) {
-                            console.error("Error parsing chunk", e);
-                        }
+                        } catch (e) {}
                     }
                 }
-            } catch (error) {
-                bubble.textContent = 'Server connection error.';
-            }
+            } catch (error) { bubble.textContent = 'Connection error. Please check your network.'; }
         }
 
-        async function logout() {
-            await fetch('/api/logout', { method: 'POST' });
-            window.location.href = '/login';
-        }
+        async function logout() { await fetch('/api/logout', { method: 'POST' }); window.location.href = '/login'; }
 
         async function clearChatHistory() {
-            if (!confirm('Are you sure you want to delete your entire chat history? This cannot be undone.')) return;
-            
+            if (!confirm('Are you sure you want to clear your chat history?')) return;
             try {
                 const response = await fetch('/api/chat/reset', { method: 'POST' });
                 if (response.ok) {
-                    chatContainer.innerHTML = `
-                        <div class="flex justify-start">
-                            <div class="bg-white border border-slate-100 rounded-2xl rounded-tl-none p-4 shadow-sm max-w-[85%] md:max-w-[70%]">
-                                <p class="text-sm leading-relaxed">History cleared. How can I help you today?</p>
-                            </div>
-                        </div>
-                    `;
-                } else {
-                    alert('Failed to clear history.');
+                    chatContainer.innerHTML = `<div class="flex justify-start"><div class="chat-bubble-ai glass-card rounded-3xl p-6 shadow-2xl max-w-[85%] border-accent-indigo/10"><p class="text-sm leading-relaxed">Chat history cleared.</p></div></div>`;
                 }
-            } catch (error) {
-                alert('Connection error.');
-            }
+            } catch (error) {}
         }
-
-        (async function init() {
-            await requireSession();
-            await loadPreviousConversation();
-        })();
+        (async function init() { await requireSession(); await loadPreviousConversation(); })();
     </script>
 </body>
 </html>

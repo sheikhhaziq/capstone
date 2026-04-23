@@ -3,50 +3,115 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MindSpace — Peer Forum</title>
+    <title>MindBridge — Community Ledger</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/static/css/theme.css">
+    <script src="/static/js/theme.js"></script>
 </head>
-<body class="bg-slate-50 min-h-screen text-slate-800">
-    <header class="bg-white border-b border-slate-200 shadow-sm">
-        <div class="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
-            <div>
-                <h1 class="text-xl font-bold text-teal-800">Peer Forum</h1>
-                <p class="text-xs text-slate-500">Anonymous discussion — you appear as <span class="font-medium text-slate-700">{{ peer_label }}</span></p>
+<body class="fade-in">
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="mb-10 px-2 text-center md:text-left">
+                <h1 class="text-2xl font-black gradient-text tracking-tighter uppercase">Peer Forum</h1>
+                <p class="text-[10px] font-bold text-muted uppercase tracking-[0.2em] mt-1 italic">MindBridge Community Hub</p>
             </div>
-        </div>
-    </header>
 
-    <main class="max-w-3xl mx-auto px-4 py-6 space-y-8">
-        <section class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
-            <h2 class="font-semibold text-slate-800 mb-3">Start a topic</h2>
-            <form method="post" action="/forum/threads" class="space-y-3">
-                <input type="text" name="title" required maxlength="200" placeholder="Topic title"
-                    class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500">
-                <textarea name="body" required rows="4" maxlength="8000" placeholder="What's on your mind?"
-                    class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500"></textarea>
-                <p class="text-[11px] text-slate-400">Posts are public. Do not share personally identifiable information.</p>
-                <button type="submit"
-                    class="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white text-sm font-medium rounded-lg">Post</button>
-            </form>
-        </section>
+            <nav class="flex-1 space-y-1">
+                <a href="{{ web_url }}/student/dashboard" class="nav-link">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                    Overview
+                </a>
+                <a href="{{ web_url }}/chat" class="nav-link">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
+                    AI Chat
+                </a>
+                <a href="/forum" class="nav-link active">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                    Peer Forum
+                </a>
+                <a href="{{ web_url }}/resources" class="nav-link">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                    Resources
+                </a>
+                <a href="{{ web_url }}/screening" class="nav-link">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+                    Screening
+                </a>
+            </nav>
 
-        <section>
-            <h2 class="font-semibold text-slate-800 mb-3">Topics</h2>
-            {% if threads %}
-            <ul class="space-y-2">
-                {% for t in threads %}
-                <li>
-                    <a href="/forum/threads/{{ t.id }}" class="block bg-white rounded-lg border border-slate-200 p-4 hover:border-teal-300 transition">
-                        <span class="font-medium text-slate-900">{{ t.title }}</span>
-                        <span class="text-xs text-slate-400 ml-2">{{ t.created_at.strftime('%Y-%m-%d %H:%M UTC') }}</span>
-                    </a>
-                </li>
+            <div class="mt-auto p-4 glass-card border-accent-indigo/10 bg-accent-indigo/5">
+                <p class="text-[9px] font-black uppercase tracking-widest text-accent-indigo mb-2">Connected As</p>
+                <p class="text-sm font-bold truncate">{{ peer_label }}</p>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Mobile Header -->
+            <header class="lg:hidden flex items-center justify-between mb-8">
+                 <h1 class="text-xl font-black gradient-text tracking-tighter uppercase">MindBridge</h1>
+                 <button id="mobile-menu-toggle" class="p-2 glass-card rounded-lg">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+                 </button>
+            </header>
+
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
+                <div>
+                    <h2 class="text-4xl font-black tracking-tight uppercase">Community Forum</h2>
+                    <p class="text-sm text-secondary mt-1 uppercase tracking-widest font-bold opacity-60">Speak your mind, anonymously.</p>
+                </div>
+                <div class="flex flex-col items-end">
+                     <span class="text-[10px] font-black uppercase tracking-[0.2em] text-accent-teal mb-2">Topics: {{ threads|length }}</span>
+                     <button onclick="document.getElementById('new-thread-modal').classList.remove('hidden')" class="btn-premium px-8">
+                        New Topic
+                     </button>
+                </div>
+            </div>
+
+            <div class="space-y-6">
+                {% for thread in threads %}
+                <a href="/forum/threads/{{ thread.id }}" class="block glass-card p-6 group hover:border-accent-indigo transition-all duration-500">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h3 class="text-xl font-black group-hover:text-accent-indigo transition-colors">{{ thread.title }}</h3>
+                            <p class="text-[10px] font-bold text-muted uppercase tracking-widest mt-2 italic">Posted: {{ thread.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                        </div>
+                        <div class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-muted group-hover:bg-accent-indigo group-hover:text-white transition-all">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                        </div>
+                    </div>
+                </a>
                 {% endfor %}
-            </ul>
-            {% else %}
-            <p class="text-sm text-slate-500">No topics yet. Be the first to post.</p>
-            {% endif %}
-        </section>
-    </main>
+            </div>
+        </main>
+    </div>
+
+    <!-- New Thread Modal -->
+    <div id="new-thread-modal" class="fixed inset-0 z-[2000] hidden bg-black/60 backdrop-blur-sm flex items-center justify-center p-6">
+        <div class="glass-card w-full max-w-2xl p-8 slide-up">
+            <div class="flex justify-between items-center mb-8">
+                <h3 class="text-2xl font-black uppercase tracking-tighter">Start New Topic</h3>
+                <button onclick="document.getElementById('new-thread-modal').classList.add('hidden')" class="text-muted hover:text-white">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <form action="/forum/threads" method="POST" class="space-y-6">
+                <div class="space-y-2">
+                    <label class="text-[10px] font-black uppercase tracking-widest text-muted px-2">Topic Title</label>
+                    <input type="text" name="title" required placeholder="What's on your mind?">
+                </div>
+                <div class="space-y-2">
+                    <label class="text-[10px] font-black uppercase tracking-widest text-muted px-2">Message</label>
+                    <textarea name="body" rows="6" required placeholder="Share your experience anonymously..."></textarea>
+                </div>
+                <button type="submit" class="w-full btn-premium py-4 font-black tracking-[0.2em] text-sm">Post Topic</button>
+            </form>
+        </div>
+    </div>
+
+    <button id="theme-toggle" class="theme-toggle" title="Toggle Theme">
+        <span id="theme-toggle-icon">☀️</span>
+    </button>
 </body>
 </html>

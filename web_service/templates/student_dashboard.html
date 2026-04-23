@@ -3,189 +3,276 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Dashboard</title>
+    <title>MindBridge — Student Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/static/css/theme.css">
+    <script src="/static/js/theme.js"></script>
 </head>
-<body class="bg-slate-100 min-h-screen p-6">
-    <div class="max-w-6xl mx-auto">
-        <div class="flex items-center justify-between mb-6">
-            <h1 class="text-2xl font-bold text-slate-800">Student Dashboard</h1>
-            <div class="space-x-3 flex items-center">
-                <a href="/chat" class="text-sm text-teal-700 hover:underline">AI Chat</a>
-                <button onclick="clearAiHistory()" class="text-sm text-slate-500 hover:text-red-500 transition border-l border-slate-300 pl-3">Clear AI History</button>
-                <a href="{{ forum_url }}/forum" target="_blank" rel="noopener noreferrer" class="text-sm text-teal-700 hover:underline">Peer Forum</a>
-                <a href="/screening" class="text-sm text-teal-700 hover:underline">Take Screening</a>
-                <a href="/resources" class="text-sm text-teal-700 hover:underline">Resource Hub</a>
-                <button onclick="logout()" class="text-sm text-red-600 hover:underline">Logout</button>
+<body class="fade-in">
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="mb-10 px-2 text-center md:text-left">
+                <h1 class="text-2xl font-black gradient-text tracking-tighter uppercase">MindBridge</h1>
+                <p class="text-[10px] font-bold text-muted uppercase tracking-[0.2em] mt-1 italic">Mental Wellness Hub</p>
             </div>
-        </div>
-        <p id="session-text" class="text-sm text-slate-600 mb-4"></p>
 
-        <div class="grid md:grid-cols-2 gap-6">
-            <section class="bg-white rounded-xl border border-slate-200 p-4">
-                <h2 class="font-semibold text-slate-800 mb-3">Available Slots</h2>
-                <div id="slot-list" class="space-y-2 text-sm text-slate-700"></div>
-            </section>
+            <nav class="flex-1 space-y-1">
+                <a href="/student/dashboard" class="nav-link active">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                    Overview
+                </a>
+                <a href="/chat" class="nav-link">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
+                    AI Chat
+                </a>
+                <a href="{{ forum_url }}/forum" class="nav-link">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                    Peer Forum
+                </a>
+                <a href="/resources" class="nav-link">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                    Resources
+                </a>
+                <a href="/screening" class="nav-link">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+                    Screening
+                </a>
+            </nav>
 
-            <section class="bg-white rounded-xl border border-slate-200 p-4">
-                <h2 class="font-semibold text-slate-800 mb-3">My Appointments</h2>
-                <div id="appointment-list" class="space-y-2 text-sm text-slate-700"></div>
-            </section>
-        </div>
+            <div class="pt-10 mt-10 border-t border-white/5">
+                <button onclick="logout()" class="nav-link text-rose-500 w-full text-left font-bold">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                    Logout
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Mobile Header -->
+            <header class="lg:hidden flex items-center justify-between mb-8">
+                 <h1 class="text-xl font-black gradient-text tracking-tighter uppercase">MindBridge</h1>
+                 <button id="mobile-menu-toggle" class="p-2 glass-card rounded-lg">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+                 </button>
+            </header>            <!-- Wellness Hero Banner -->
+            <div class="hero-banner p-12 rounded-[2.5rem] mb-12 flex flex-col md:flex-row items-center justify-between gap-8 shadow-2xl shadow-accent-indigo/10">
+                <div class="max-w-md">
+                    <h2 id="session-text" class="text-5xl font-black tracking-tighter mb-4 text-white">Welcome back</h2>
+                    <p class="text-white/90 text-sm leading-relaxed font-semibold">Your journey to mental clarity continues here. Today is a clean slate to prioritize your internal peace.</p>
+                </div>
+                <div class="flex gap-4">
+                    <div class="glass-card bg-white/10 border-white/20 p-6 flex flex-col items-center min-w-[130px] backdrop-blur-md">
+                        <span class="text-[10px] font-black uppercase tracking-[0.2em] text-white/50 mb-1">Last Score</span>
+                        <span class="text-3xl font-black tracking-tighter text-white">14</span>
+                    </div>
+                    <div class="glass-card bg-white/10 border-white/20 p-6 flex flex-col items-center min-w-[130px] backdrop-blur-md">
+                        <span class="text-[10px] font-black uppercase tracking-[0.2em] text-white/50 mb-1">Sessions</span>
+                        <span class="text-3xl font-black tracking-tighter text-white">02</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dashboard Grid -->
+            <div class="grid lg:grid-cols-12 gap-10">
+                <!-- Left Column: Main Actions & Discover -->
+                <div class="lg:col-span-8 space-y-12">
+                    <!-- Quick Actions -->
+                    <section>
+                        <h3 class="text-xl font-black uppercase tracking-widest mb-8 flex items-center">
+                            <span class="w-2 h-8 bg-accent-teal rounded-full mr-3"></span>
+                            Command Center
+                        </h3>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+                            <a href="/chat" class="action-tile group">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
+                                <span>AI Session</span>
+                            </a>
+                            <a href="{{ forum_url }}/forum" class="action-tile">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                                <span>Peer Hub</span>
+                            </a>
+                            <a href="/screening" class="action-tile">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+                                <span>Screening</span>
+                            </a>
+                            <a href="/resources" class="action-tile">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                                <span>Library</span>
+                            </a>
+                        </div>
+                    </section>
+
+                    <!-- Discovery -->
+                    <section>
+                        <div class="flex items-center justify-between mb-8">
+                            <h3 class="text-xl font-black uppercase tracking-widest flex items-center">
+                                <span class="w-2 h-8 bg-accent-indigo rounded-full mr-3"></span>
+                                Clinical Node Discovery
+                            </h3>
+                            <button onclick="loadSlots()" class="p-2 hover:bg-accent-indigo/10 rounded-full transition-colors">
+                                <svg class="w-5 h-5 text-accent-indigo" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                            </button>
+                        </div>
+                        <div id="slot-list" class="grid md:grid-cols-2 gap-8"></div>
+                    </section>
+                </div>
+
+                <!-- Right Column: Timeline & Care -->
+                <div class="lg:col-span-4 space-y-12">
+                    <section>
+                        <h3 class="text-xl font-black uppercase tracking-widest mb-8 flex items-center">
+                            <span class="w-2 h-8 bg-accent-rose rounded-full mr-3"></span>
+                            Your Timeline
+                        </h3>
+                        <div id="appointment-list" class="space-y-6"></div>
+                    </section>
+
+                    <!-- Safety & Privacy -->
+                    <section class="glass-card p-8 border-rose-500/20 bg-rose-500/5 relative overflow-hidden group text-center md:text-left">
+                        <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:rotate-12 transition-transform">
+                            <svg class="w-16 h-16" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+                        </div>
+                        <h4 class="font-black text-rose-500 mb-2 uppercase tracking-widest text-xs">Privacy Protocol</h4>
+                        <p class="text-[11px] text-secondary leading-relaxed mb-6 font-medium">Resetting your AI companion will terminate all current context and purge history. This action is definitive.</p>
+                        <button onclick="clearAiHistory()" class="w-full py-3 text-xs font-black uppercase tracking-[0.2em] text-rose-500 border border-rose-500/30 rounded-[1rem] hover:bg-rose-500 hover:text-white transition-all shadow-lg hover:shadow-rose-500/20">
+                            Terminate Context
+                        </button>
+                    </section>
+                </div>
+            </div>
+>
+        </main>
     </div>
+
+    <button id="theme-toggle" class="theme-toggle" title="Toggle Theme">
+        <span id="theme-toggle-icon">☀️</span>
+    </button>
 
     <script>
         function showToast(message, type = 'success') {
             const toast = document.createElement('div');
-            toast.className = `fixed bottom-4 right-4 px-6 py-3 rounded-lg shadow-lg text-white font-medium transform transition-all translate-y-full opacity-0 z-50 ${type === 'success' ? 'bg-teal-600' : 'bg-red-600'}`;
-            toast.textContent = message;
+            toast.className = `fixed bottom-24 right-6 px-6 py-4 rounded-2xl shadow-2xl glass-card z-50 transform transition-all translate-y-20 opacity-0 flex items-center border-l-4 ${type === 'success' ? 'border-accent-teal' : 'border-rose-500'}`;
+            toast.innerHTML = `
+                <div class="w-8 h-8 rounded-full flex items-center justify-center mr-3 ${type === 'success' ? 'bg-accent-teal/10 text-accent-teal' : 'bg-rose-500/10 text-rose-500'}">
+                    ${type === 'success' ? '✓' : '!'}
+                </div>
+                <span class="font-bold text-sm tracking-tight">${message}</span>
+            `;
             document.body.appendChild(toast);
-            
+            setTimeout(() => toast.classList.remove('translate-y-20', 'opacity-0'), 10);
             setTimeout(() => {
-                toast.classList.remove('translate-y-full', 'opacity-0');
-            }, 10);
-            
-            setTimeout(() => {
-                toast.classList.add('translate-y-full', 'opacity-0');
+                toast.classList.add('translate-y-20', 'opacity-0');
                 setTimeout(() => toast.remove(), 300);
-            }, 3000);
+            }, 4000);
         }
 
         async function requireStudentSession() {
             const response = await fetch('/api/session');
-            if (!response.ok) {
-                window.location.href = '/login';
-                return null;
-            }
+            if (!response.ok) { window.location.href = '/login'; return null; }
             const data = await response.json();
-            if (data.user.role !== 'student') {
-                window.location.href = '/login';
-                return null;
-            }
-            document.getElementById('session-text').textContent = `Logged in as ${data.user.name} (${data.user.subject})`;
+            if (data.user.role !== 'student') { window.location.href = '/login'; return null; }
+            document.getElementById('session-text').textContent = `Peace be with you, ${data.user.name}`;
             return data.user;
         }
 
         function formatTime(iso) {
-            const d = new Date(iso);
-            return d.toLocaleString('en-US', {
-                weekday: 'short', month: 'short', day: 'numeric',
-                hour: 'numeric', minute: '2-digit', hour12: true
-            });
+            return new Date(iso).toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true });
         }
 
         async function loadSlots() {
             const slotList = document.getElementById('slot-list');
-            slotList.innerHTML = '<div class="text-slate-400 italic py-4">Loading open slots...</div>';
-            
-            const response = await fetch('/api/student/slots');
-            const data = await response.json();
-            
-            if (!response.ok || data.status !== 'OK') {
-                slotList.innerHTML = '<div class="text-red-500 py-4">Could not load availability slots.</div>';
-                return;
-            }
-            if (data.slots.length === 0) {
-                slotList.innerHTML = '<div class="p-6 text-center border border-dashed rounded-lg border-slate-300 text-slate-500">No open slots available right now.</div>';
-                return;
-            }
-            
-            slotList.innerHTML = '';
-            data.slots.forEach(slot => {
-                const row = document.createElement('div');
-                row.className = 'border border-slate-200 rounded-xl p-4 flex flex-col justify-between hover:shadow-sm transition-shadow';
-                row.innerHTML = `
-                    <div>
-                        <p class="font-bold text-slate-800 text-base">${slot.psychologist_name}</p>
-                        <p class="text-teal-700 text-xs font-medium uppercase mb-2">${slot.specialization}</p>
-                        <p class="text-slate-600 font-medium">${formatTime(slot.start_at)}</p>
-                        <p class="text-slate-400 text-sm opacity-80">until ${formatTime(slot.end_at)}</p>
-                    </div>
-                    <button class="mt-4 w-full px-4 py-2.5 bg-teal-600 text-white font-medium rounded-lg hover:bg-teal-700 transition focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-1">Book Appointment</button>
-                `;
-                
-                const btn = row.querySelector('button');
-                btn.onclick = async () => {
-                    const originalText = btn.textContent;
-                    btn.textContent = 'Booking...';
-                    btn.disabled = true;
-                    btn.classList.add('opacity-70', 'cursor-not-allowed');
-
-                    const bookResp = await fetch('/api/student/appointments/book', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ slot_id: slot.slot_id })
-                    });
-                    
-                    const bookData = await bookResp.json();
-                    if (bookResp.ok) {
-                        showToast('Appointment easily booked!', 'success');
-                        await loadSlots();
-                        await loadAppointments();
-                    } else {
-                        showToast(bookData.message || bookData.detail || 'Failed to book slot.', 'error');
-                        btn.textContent = originalText;
-                        btn.disabled = false;
-                        btn.classList.remove('opacity-70', 'cursor-not-allowed');
-                        await loadSlots();
-                    }
-                };
-                slotList.appendChild(row);
-            });
+            slotList.innerHTML = '<div class="col-span-full py-20 text-center font-bold text-muted uppercase tracking-widest text-xs animate-pulse">Loading psychologists...</div>';
+            try {
+                const response = await fetch('/api/student/slots');
+                const data = await response.json();
+                if (!response.ok || data.status !== 'OK') {
+                    slotList.innerHTML = '<div class="col-span-full p-8 glass-card border-rose-500 text-rose-500 text-center font-bold">Error: Connection failed.</div>';
+                    return;
+                }
+                if (data.slots.length === 0) {
+                    slotList.innerHTML = '<div class="col-span-full p-20 glass-card text-center border-dashed opacity-50"><p class="font-bold uppercase tracking-widest text-xs">No psychologists available.</p><p class="text-xs mt-2">Please check back later.</p></div>';
+                    return;
+                }
+                slotList.innerHTML = '';
+                data.slots.forEach(slot => {
+                    const card = document.createElement('div');
+                    card.className = 'glass-card p-6 group transition-all duration-500';
+                    card.innerHTML = `
+                        <div class="flex justify-between items-start mb-6">
+                            <div>
+                                <h4 class="font-black text-xl tracking-tight leading-none">${slot.psychologist_name}</h4>
+                                <span class="text-[10px] font-black uppercase tracking-[0.2em] text-accent-teal mt-2 inline-block">${slot.specialization}</span>
+                            </div>
+                            <div class="w-12 h-12 rounded-2xl bg-accent-teal/5 flex items-center justify-center text-accent-teal border border-accent-teal/10 group-hover:scale-110 transition-transform">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3 text-sm text-secondary px-3 py-2 bg-white/5 rounded-xl mb-8">
+                            <svg class="w-4 h-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            <span class="font-bold">${formatTime(slot.start_at)}</span>
+                        </div>
+                        <button class="w-full btn-premium py-3">Book Session</button>
+                    `;
+                    const btn = card.querySelector('button');
+                    btn.onclick = async () => {
+                        btn.textContent = 'Processing...';
+                        btn.disabled = true;
+                        const bookResp = await fetch('/api/student/appointments/book', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ slot_id: slot.slot_id })
+                        });
+                        if (bookResp.ok) {
+                            showToast('Session booked successfully.', 'success');
+                            await loadSlots(); await loadAppointments();
+                        } else {
+                            const bookData = await bookResp.json();
+                            showToast(bookData.message || 'Booking failed.', 'error');
+                            btn.textContent = 'Book Session'; btn.disabled = false;
+                        }
+                    };
+                    slotList.appendChild(card);
+                });
+            } catch (e) { slotList.innerHTML = '<div class="col-span-full py-20 text-center text-rose-500 font-black">CRITICAL_NETWORK_INTEREST_ERROR</div>'; }
         }
 
         async function loadAppointments() {
             const list = document.getElementById('appointment-list');
-            list.innerHTML = '<div class="text-slate-400 italic py-4">Loading your appointments...</div>';
-            
-            const response = await fetch('/api/student/appointments');
-            const data = await response.json();
-            
-            if (!response.ok || data.status !== 'OK') {
-                list.innerHTML = '<div class="text-red-500 py-4">Could not load your appointments.</div>';
-                return;
-            }
-            if (data.appointments.length === 0) {
-                list.innerHTML = '<div class="p-6 text-center border border-dashed rounded-lg border-slate-300 text-slate-500">You have no upcoming appointments.</div>';
-                return;
-            }
-            
-            list.innerHTML = '';
-            data.appointments.forEach(item => {
-                const row = document.createElement('div');
-                row.className = 'border border-slate-200 bg-slate-50 rounded-xl p-4 flex flex-col justify-between';
-                row.innerHTML = `
-                    <div class="flex justify-between items-start mb-2">
-                        <p class="font-bold text-slate-800">${item.psychologist_name}</p>
-                        <span class="px-2 py-1 text-[10px] uppercase font-bold tracking-wider rounded-full ${
-                            item.status === 'booked' ? 'bg-amber-100 text-amber-800' : 'bg-slate-200 text-slate-700'
-                        }">${item.status}</span>
-                    </div>
-                    <p class="text-slate-600 font-medium">${formatTime(item.start_at)}</p>
-                    <a class="mt-4 block text-center w-full px-4 py-2.5 bg-slate-800 text-white font-medium rounded-lg hover:bg-slate-900 transition" href="/appointments/chat/${item.appointment_id}">Join Room</a>
-                `;
-                list.appendChild(row);
-            });
+            list.innerHTML = '<div class="text-center py-10 opacity-30 animate-pulse">Loading sessions...</div>';
+            try {
+                const response = await fetch('/api/student/appointments');
+                const data = await response.json();
+                if (!response.ok || data.status !== 'OK') { list.innerHTML = '<p class="text-rose-500 text-xs">Connection error.</p>'; return; }
+                if (data.appointments.length === 0) { list.innerHTML = '<div class="p-8 glass-card text-center border-dashed opacity-50 text-[10px] font-bold uppercase tracking-widest">No segments found</div>'; return; }
+                list.innerHTML = '';
+                data.appointments.forEach(item => {
+                    const card = document.createElement('div');
+                    card.className = 'timeline-item mb-8';
+                    card.innerHTML = `
+                        <div class="glass-card p-5 hover:bg-white/5 transition-all">
+                            <span class="text-[9px] font-black uppercase tracking-[0.2em] text-accent-indigo opacity-60">${formatTime(item.start_at)}</span>
+                            <h4 class="font-black text-sm mt-2 mb-4">${item.psychologist_name}</h4>
+                            <a href="/appointments/chat/${item.appointment_id}" class="inline-block text-[9px] font-black uppercase tracking-widest px-4 py-2 bg-accent-indigo text-white rounded-lg hover:scale-105 transition-transform shadow-lg shadow-accent-indigo/20">
+                                Restore Session
+                            </a>
+                        </div>
+                    `;
+                    list.appendChild(card);
+                });
+            } catch (e) { list.innerHTML = '<p class="text-rose-500 text-xs text-center font-bold uppercase">Load Failed</p>'; }
         }
 
-        async function logout() {
-            await fetch('/api/logout', { method: 'POST' });
-            window.location.href = '/login';
-        }
+        async function logout() { await fetch('/api/logout', { method: 'POST' }); window.location.href = '/login'; }
 
         async function clearAiHistory() {
-            if (!confirm('Are you sure you want to delete your entire AI chat history? This cannot be undone.')) return;
-            
+            if (!confirm('Are you sure you want to clear your AI chat history?')) return;
             try {
                 const response = await fetch('/api/chat/reset', { method: 'POST' });
-                if (response.ok) {
-                    showToast('AI Chat history cleared successfully!', 'success');
-                } else {
-                    showToast('Failed to clear history.', 'error');
-                }
-            } catch (error) {
-                showToast('Connection error.', 'error');
-            }
+                if (response.ok) showToast('AI history cleared.', 'success');
+                else showToast('Clear failed.', 'error');
+            } catch (error) { showToast('Connection error.', 'error'); }
         }
 
         (async function init() {

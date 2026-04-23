@@ -3,46 +3,103 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PHQ-9 Screening Form - MindBridge</title>
+    <title>PHQ-9 Screening — MindBridge</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/static/css/theme.css">
+    <script src="/static/js/theme.js"></script>
 </head>
-<body class="bg-slate-50 min-h-screen py-10 px-4">
-    <div class="max-w-3xl mx-auto">
-        <div class="mb-6 flex items-center justify-between">
-            <h1 class="text-3xl font-extrabold text-slate-800 tracking-tight">Psychological Screening</h1>
-            <a href="/student/dashboard" class="px-4 py-2 bg-white text-teal-700 font-medium border border-slate-200 rounded-lg shadow-sm hover:bg-slate-50 transition">Exit to Dashboard</a>
-        </div>
+<body class="fade-in">
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="mb-10 px-2 text-center md:text-left">
+                <h1 class="text-2xl font-black gradient-text tracking-tighter uppercase">MindBridge</h1>
+                <p class="text-[10px] font-bold text-muted uppercase tracking-[0.2em] mt-1 italic">Mental Wellness Hub</p>
+            </div>
 
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
-            <h2 class="text-xl font-bold text-slate-800 mb-2">Patient Health Questionnaire (PHQ-9)</h2>
-            <p class="mb-6 text-slate-600">Over the last 2 weeks, how often have you been bothered by any of the following problems?</p>
-            
-            <form id="screening-form" class="space-y-6">
-                <div id="questions-container" class="space-y-5"></div>
+            <nav class="flex-1 space-y-1">
+                <a href="/student/dashboard" class="nav-link">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                    Overview
+                </a>
+                <a href="/chat" class="nav-link">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
+                    AI Chat
+                </a>
+                <a href="{{ forum_url }}/forum" class="nav-link">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                    Peer Forum
+                </a>
+                <a href="/resources" class="nav-link">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                    Resources
+                </a>
+                <a href="/screening" class="nav-link active">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+                    Screening
+                </a>
+            </nav>
+
+            <div class="pt-10 mt-10 border-t border-white/5">
+                <button onclick="logout()" class="nav-link text-rose-500 w-full text-left font-bold">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                    Logout
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Mobile Header -->
+            <header class="lg:hidden flex items-center justify-between mb-8">
+                 <h1 class="text-xl font-black gradient-text tracking-tighter uppercase">MindBridge</h1>
+                 <button id="mobile-menu-toggle" class="p-2 glass-card rounded-lg">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+                 </button>
+            </header>
+
+            <div class="mb-12">
+                <h2 class="text-4xl font-black tracking-tight uppercase">Health Screening</h2>
+                <p class="text-secondary mt-2 opacity-80 italic">Standardized Patient Health Questionnaire (PHQ-9) • Data Encrypted</p>
+            </div>
+
+            <div class="glass-card p-10 md:p-14 mb-20">
+                <div id="intro-area" class="mb-12 border-b border-white/5 pb-10">
+                    <h3 class="text-xl font-black mb-3 uppercase tracking-tighter">Assessment Overview</h3>
+                    <p class="text-muted leading-relaxed max-w-2xl">Over the last 2 weeks, how often have you been bothered by the following problems? This assessment helps track your personal wellness over time.</p>
+                </div>
                 
-                <div class="pt-4 mt-6 border-t border-slate-100">
-                    <button type="submit" class="w-full md:w-auto px-8 py-3 bg-teal-600 text-white rounded-xl font-semibold shadow-sm hover:bg-teal-700 hover:shadow transform hover:-translate-y-0.5 transition-all outline-none focus:ring-4 focus:ring-teal-200">
-                        Submit Screening
-                    </button>
-                    <p class="text-xs text-slate-400 mt-3 text-center md:text-left">By submitting, your anonymized score may be used by the institution to aggregate wellness trends.</p>
-                </div>
-            </form>
+                <form id="screening-form" class="space-y-16">
+                    <div id="questions-container" class="space-y-12"></div>
+                    
+                    <div class="pt-12 border-t border-white/5">
+                        <button type="submit" class="w-full md:w-auto btn-premium px-16 py-4 text-[10px] font-black uppercase tracking-[0.3em]">
+                            Submit Assessment
+                        </button>
+                        <p class="text-[10px] text-muted mt-6 text-center md:text-left font-bold uppercase tracking-widest opacity-40 italic">Results are anonymized for collective wellness analytics.</p>
+                    </div>
+                </form>
 
-            <div id="result-box" class="hidden mt-8 p-6 rounded-2xl bg-gradient-to-br from-teal-50 to-emerald-50 border border-teal-100">
-                <div class="flex items-center space-x-3 mb-2">
-                    <svg class="w-8 h-8 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    <h2 class="font-bold text-teal-900 text-xl">Screening Submitted Successfully</h2>
-                </div>
-                <div class="mt-4 bg-white/60 p-4 rounded-xl border border-teal-100 shadow-sm">
-                    <p id="score-text" class="text-teal-800 leading-relaxed"></p>
-                </div>
-                <div class="mt-6 flex space-x-4">
-                    <a href="/resources" class="px-5 py-2.5 bg-teal-600 hover:bg-teal-700 text-white font-medium rounded-lg transition-colors">Visit Resource Hub</a>
-                    <a href="/chat" class="px-5 py-2.5 bg-white text-teal-700 border border-teal-200 font-medium rounded-lg hover:bg-teal-50 transition-colors">Talk to AI Peer</a>
+                <div id="result-box" class="hidden mt-6 text-center animate-in fade-in zoom-in duration-700">
+                    <div class="w-24 h-24 bg-accent-teal/10 text-accent-teal rounded-full flex items-center justify-center mx-auto mb-8 border border-accent-teal/20">
+                        <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </div>
+                    <h2 class="text-4xl font-black mb-6 uppercase tracking-tighter">Analysis Complete</h2>
+                    <div class="p-10 glass-card border-accent-teal/20 bg-accent-teal/5 mb-12">
+                        <p id="score-text" class="leading-relaxed text-secondary"></p>
+                    </div>
+                    <div class="flex flex-col md:flex-row justify-center gap-6">
+                        <a href="/resources" class="btn-premium px-10 py-4 uppercase text-[10px] tracking-widest">Open Library</a>
+                        <a href="/chat" class="px-10 py-4 glass-card rounded-xl font-black uppercase text-[10px] tracking-widest hover:border-accent-indigo transition-all">Start AI Chat</a>
+                    </div>
                 </div>
             </div>
-        </div>
+        </main>
     </div>
+
+    <button id="theme-toggle" class="theme-toggle" title="Toggle Theme">
+        <span id="theme-toggle-icon">☀️</span>
+    </button>
 
     <script>
         const questions = [
@@ -52,29 +109,34 @@
             "Feeling tired or having little energy.",
             "Poor appetite or overeating.",
             "Feeling bad about yourself, or that you are a failure or have let yourself or your family down.",
-            "Trouble concentrating on things, such as reading the newspaper or watching television.",
-            "Moving or speaking so slowly that other people could have noticed. Or the opposite, being so fidgety or restless that you have been moving around a lot more than usual.",
-            "Thoughts that you would be better off dead, or of hurting yourself in some way."
+            "Trouble concentrating on things, such as reading the newspaper.",
+            "Moving or speaking so slowly that other people could have noticed.",
+            "Thoughts that you would be better off dead, or of hurting yourself."
         ];
         
         const options = [
             { text: "Not at all", value: 0 },
             { text: "Several days", value: 1 },
-            { text: "More than half the days", value: 2 },
+            { text: "More than half", value: 2 },
             { text: "Nearly every day", value: 3 }
         ];
 
         const container = document.getElementById('questions-container');
         questions.forEach((q, i) => {
             const div = document.createElement('div');
-            div.className = 'p-5 rounded-xl border border-slate-100 bg-slate-50/50 hover:bg-white hover:shadow-sm hover:border-slate-200 transition-all';
-            
-            let html = `<p class="font-semibold text-slate-800 mb-4">${i + 1}. ${q}</p><div class="grid grid-cols-1 md:grid-cols-4 gap-3">`;
+            div.className = 'group';
+            let html = `
+                <div class="flex items-start mb-8">
+                    <span class="w-10 h-10 rounded-xl bg-accent-indigo/5 text-accent-indigo flex items-center justify-center font-black text-sm mr-6 mt-0.5 border border-accent-indigo/10">${i + 1}</span>
+                    <p class="font-black text-xl leading-tight group-hover:text-accent-indigo transition-colors">${q}</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 lg:ml-16">
+            `;
             options.forEach(opt => {
                 html += `
-                    <label class="flex items-center p-3 border border-slate-200 rounded-lg cursor-pointer bg-white hover:border-teal-400 hover:bg-teal-50/30 transition-colors group">
-                        <input type="radio" name="q${i}" value="${opt.value}" required class="w-4 h-4 text-teal-600 border-slate-300 focus:ring-teal-500">
-                        <span class="ml-3 text-sm font-medium text-slate-700 group-hover:text-teal-800">${opt.text}</span>
+                    <label class="relative flex flex-col items-center p-5 glass-card cursor-pointer hover:border-accent-indigo hover:bg-accent-indigo/5 transition-all text-center group/opt">
+                        <input type="radio" name="q${i}" value="${opt.value}" required class="mb-4 w-5 h-5 accent-accent-indigo">
+                        <span class="text-[10px] font-black uppercase tracking-widest text-secondary group-hover/opt:text-primary transition-colors">${opt.text}</span>
                     </label>
                 `;
             });
@@ -91,37 +153,33 @@
                 const val = formData.get(`q${i}`);
                 if (val) score += parseInt(val, 10);
             }
-
             const btn = e.target.querySelector('button[type="submit"]');
-            const originalText = btn.textContent;
-            btn.disabled = true;
-            btn.innerHTML = 'Submitting...';
-
+            btn.disabled = true; btn.innerHTML = '<span>Processing...</span>';
             const resp = await fetch('/api/student/screening', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ score: score, screening_type: 'PHQ-9' })
             });
-
             if (resp.ok) {
+                document.getElementById('intro-area').style.display = 'none';
                 e.target.style.display = 'none';
-                const resultBox = document.getElementById('result-box');
-                resultBox.classList.remove('hidden');
-                
+                document.getElementById('result-box').classList.remove('hidden');
                 let severity = "";
-                if (score <= 4) severity = "Minimal depression";
-                else if (score <= 9) severity = "Mild depression";
-                else if (score <= 14) severity = "Moderate depression";
-                else if (score <= 19) severity = "Moderately severe depression";
-                else severity = "Severe depression";
+                if (score <= 4) severity = "Minimal symptoms detected.";
+                else if (score <= 9) severity = "Mild emotional disruption.";
+                else if (score <= 14) severity = "Moderate internal strain.";
+                else if (score <= 19) severity = "High clinical distress.";
+                else severity = "Severe internal conflict.";
                 
-                document.getElementById('score-text').innerHTML = `Your PHQ-9 Severity Index is <strong class="text-2xl ml-1 text-teal-900">${score}/27</strong> <br><span class="inline-block mt-2 font-semibold">Indication: ${severity}.</span> <br><br>While this is not a clinical diagnosis, tracking your feelings is a great first step. If you're feeling overwhelmed, our resources or a short chat with an on-campus counselor can make a world of difference.`;
-            } else {
-                alert("Failed to submit screening. Please try again.");
-                btn.disabled = false;
-                btn.textContent = originalText;
-            }
+                document.getElementById('score-text').innerHTML = `
+                    <span class="text-[10px] uppercase font-black tracking-[0.2em] text-muted block mb-4">Assessment Result</span>
+                    <strong class="text-5xl font-black gradient-text">${score} / 27</strong>
+                    <br><br>
+                    <span class="text-2xl font-black uppercase tracking-tighter decoration-accent-indigo underline decoration-4 underline-offset-8">${severity}</span>
+                `;
+            } else { alert("Connection failure. Please try again."); btn.disabled = false; btn.innerHTML = '<span>Submit Assessment</span>'; }
         });
+        async function logout() { await fetch('/api/logout', { method: 'POST' }); window.location.href = '/login'; }
     </script>
 </body>
 </html>

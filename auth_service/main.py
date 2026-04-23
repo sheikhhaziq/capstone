@@ -978,3 +978,46 @@ def admin_analytics(request: TokenRequest):
         "total_psychologists": total_psychologists,
         "average_screening_score": round(float(avg_score), 1)
     }
+
+
+@app.post("/admin/students/list")
+def admin_list_students(request: TokenRequest):
+    claims = decode_token(request.token)
+    require_role(claims, "admin")
+    with Session(engine) as session:
+        students = session.execute(select(Student).order_by(Student.created_at.desc())).scalars().all()
+    return {
+        "status": "OK",
+        "students": [
+            {
+                "student_id": s.student_id,
+                "name": s.name,
+                "is_active": s.is_active,
+                "created_at": s.created_at
+            }
+            for s in students
+        ]
+    }
+
+
+@app.post("/psychologist/analytics")
+def psychologist_analytics(request: TokenRequest):
+    claims = decode_token(request.token)
+    require_role(claims, "psychologist")
+    psych_id = int(claims.get("psychologist_id"))
+    with Session(engine) as session:
+        total_appointments = session.execute(
+            select(func.count(Appointment.id)).where(Appointment.psychologist_id == psych_id)
+        ).scalar() or 0
+        unique_students = session.execute(
+            select(func.count(func.distinct(Appointment.student_id))).where(Appointment.psychologist_id == psych_id)
+        ).scalar() or 0
+        total_slots = session.execute(
+            select(func.count(AvailabilitySlot.id)).where(AvailabilitySlot.psychologist_id == psych_id)
+        ).scalar() or 0
+    return {
+        "status": "OK",
+        "total_appointments": total_appointments,
+        "unique_students": unique_students,
+        "total_slots": total_slots
+    }

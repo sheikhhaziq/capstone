@@ -70,6 +70,8 @@ services:
         condition: service_healthy
     environment:
       - DATABASE_URL=postgresql+psycopg2://mindspace:mindspace@postgres:5432/mindspace
+    volumes:
+      - ./forum_service:/app
 
   # 2. The Web Backend
   # This service serves the UI and proxies requests to the AI service

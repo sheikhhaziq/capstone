@@ -3,75 +3,123 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Psychoeducational Resources - MindBridge</title>
+    <title>Wellness Library — MindBridge</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/static/css/theme.css">
+    <script src="/static/js/theme.js"></script>
 </head>
-<body class="bg-slate-100 min-h-screen p-6">
-    <div class="max-w-6xl mx-auto">
-        <div class="flex items-center justify-between mb-6">
-            <h1 class="text-3xl font-bold text-slate-800 tracking-tight">Resource Hub</h1>
-            <a href="/student/dashboard" class="px-4 py-2 bg-white text-teal-700 font-medium border border-teal-200 rounded-lg shadow-sm hover:bg-teal-50 transition">Back to Dashboard</a>
-        </div>
-        
-        <p class="text-slate-600 mb-8 max-w-2xl text-lg">Explore curated mental wellness resources. Below are videos, guides, and audio materials to help you build coping strategies, mindfulness, and resilience.</p>
-        
-        <div id="resources-grid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div class="col-span-full">
-                <p class="text-slate-500 italic text-center py-10">Loading resources...</p>
+<body class="fade-in">
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="mb-10 px-2 text-center md:text-left">
+                <h1 class="text-2xl font-black gradient-text tracking-tighter uppercase">MindBridge</h1>
+                <p class="text-[10px] font-bold text-muted uppercase tracking-[0.2em] mt-1 italic">Mental Wellness Hub</p>
             </div>
-        </div>
+
+            <nav class="flex-1 space-y-1">
+                <a href="/student/dashboard" class="nav-link">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                    Overview
+                </a>
+                <a href="/chat" class="nav-link">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
+                    AI Chat
+                </a>
+                <a href="{{ forum_url }}/forum" class="nav-link">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                    Peer Forum
+                </a>
+                <a href="/resources" class="nav-link active">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                    Resources
+                </a>
+                <a href="/screening" class="nav-link">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+                    Screening
+                </a>
+            </nav>
+
+            <div class="pt-10 mt-10 border-t border-white/5">
+                <button onclick="logout()" class="nav-link text-rose-500 w-full text-left font-bold">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                    Logout
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Mobile Header -->
+            <header class="lg:hidden flex items-center justify-between mb-8">
+                 <h1 class="text-xl font-black gradient-text tracking-tighter uppercase">MindBridge</h1>
+                 <button id="mobile-menu-toggle" class="p-2 glass-card rounded-lg">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+                 </button>
+            </header>
+
+            <div class="mb-12">
+                <h2 class="text-4xl font-black tracking-tight uppercase">Wellness Library</h2>
+                <p class="text-secondary mt-2 max-w-2xl text-lg opacity-80 italic">Expert materials to support your internal growth and mental stability.</p>
+            </div>
+            
+            <div id="resources-grid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-8 pb-20">
+                <div class="col-span-full py-20 text-center text-muted animate-pulse font-black uppercase tracking-widest text-xs">Loading Library...</div>
+            </div>
+        </main>
     </div>
+
+    <button id="theme-toggle" class="theme-toggle" title="Toggle Theme">
+        <span id="theme-toggle-icon">☀️</span>
+    </button>
 
     <script>
         async function loadResources() {
             const grid = document.getElementById('resources-grid');
-            const resp = await fetch('/api/student/resources');
-            const data = await resp.json();
-
-            if (!resp.ok) {
-                grid.innerHTML = '<div class="col-span-full text-center"><p class="text-red-500 py-10">Failed to load resources.</p></div>';
-                return;
-            }
-
-            if (data.resources.length === 0) {
-                grid.innerHTML = '<div class="col-span-full text-center"><p class="text-slate-500 py-10">No resources available at the moment. Please check back later.</p></div>';
-                return;
-            }
-
-            grid.innerHTML = '';
-            data.resources.forEach(r => {
-                const card = document.createElement('div');
-                card.className = 'bg-white rounded-2xl shadow-sm border border-slate-200 p-5 flex flex-col hover:shadow-md transition-shadow relative overflow-hidden group';
-                let mediaHtml = '';
-                
-                // Beautiful type indicator badge
-                let typeColor = 'bg-blue-100 text-blue-800';
-                if (r.resource_type.toLowerCase() === 'video') typeColor = 'bg-rose-100 text-rose-800';
-                if (r.resource_type.toLowerCase() === 'audio') typeColor = 'bg-emerald-100 text-emerald-800';
-                if (r.resource_type.toLowerCase() === 'guide') typeColor = 'bg-indigo-100 text-indigo-800';
-
-                // Display youtube embed if applicable
-                if (r.resource_type.toLowerCase() === 'video' && r.url.includes('youtube.com/embed')) {
-                     mediaHtml = `<div class="mb-5 aspect-video overflow-hidden rounded-xl bg-slate-100 flex-shrink-0"><iframe class="w-full h-full" src="${r.url}" frameborder="0" allowfullscreen></iframe></div>`;
+            try {
+                const resp = await fetch('/api/student/resources');
+                const data = await resp.json();
+                if (!resp.ok) { grid.innerHTML = '<div class="col-span-full p-20 glass-card text-rose-500 font-bold text-center border-rose-500/20">Access Denied</div>'; return; }
+                if (data.resources.length === 0) {
+                    grid.innerHTML = '<div class="col-span-full p-20 glass-card text-center border-dashed opacity-50"><p class="font-black uppercase tracking-widest text-xs">No resources available.</p></div>';
+                    return;
                 }
+                grid.innerHTML = '';
+                data.resources.forEach(r => {
+                    const card = document.createElement('div');
+                    card.className = 'glass-card flex flex-col group transition-all duration-500 overflow-hidden';
+                    let mediaHtml = '';
+                    let typeIcon = '📄';
+                    let typeTag = 'border-accent-indigo text-accent-indigo';
+                    const type = r.resource_type.toLowerCase();
+                    if (type === 'video') { typeIcon = '🎥'; typeTag = 'border-rose-500 text-rose-500 bg-rose-500/5'; }
+                    else if (type === 'audio') { typeIcon = '🎧'; typeTag = 'border-emerald-500 text-emerald-500 bg-emerald-500/5'; }
+                    else if (type === 'guide') { typeIcon = '📖'; typeTag = 'border-accent-teal text-accent-teal bg-accent-teal/5'; }
 
-                card.innerHTML = `
-                    ${mediaHtml}
-                    <div class="flex items-start justify-between mb-3">
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wider ${typeColor}">
-                            ${r.resource_type}
-                        </span>
-                    </div>
-                    <h3 class="font-bold text-xl text-slate-800 mb-2 group-hover:text-teal-700 transition-colors">${r.title}</h3>
-                    <p class="text-slate-600 mb-6 flex-grow leading-relaxed">${r.description || ''}</p>
-                    <a href="${r.url}" target="_blank" class="block text-center w-full px-5 py-2.5 bg-slate-800 hover:bg-slate-900 text-white rounded-lg font-medium transition-colors">
-                        View Resource
-                    </a>
-                `;
-                grid.appendChild(card);
-            });
+                    if (type === 'video' && r.url.includes('youtube.com/embed')) {
+                         mediaHtml = `<div class="aspect-video bg-black/20"><iframe class="w-full h-full" src="${r.url}" frameborder="0" allowfullscreen></iframe></div>`;
+                    } else {
+                         mediaHtml = `<div class="aspect-video bg-gradient-to-br from-indigo-500/5 to-purple-500/5 flex items-center justify-center text-6xl group-hover:scale-110 transition-transform duration-700 opacity-20">${typeIcon}</div>`;
+                    }
+
+                    card.innerHTML = `
+                        ${mediaHtml}
+                        <div class="p-6 flex flex-col flex-grow">
+                            <div class="mb-4">
+                                <span class="text-[9px] font-black uppercase tracking-widest border px-3 py-1 rounded-md ${typeTag}">Type: ${r.resource_type}</span>
+                            </div>
+                            <h3 class="font-black text-xl mb-3 group-hover:text-accent-indigo transition-colors">${r.title}</h3>
+                            <p class="text-secondary text-sm mb-8 leading-relaxed line-clamp-3 italic opacity-70">${r.description || 'No description available.'}</p>
+                            <div class="mt-auto pt-6 border-t border-white/5">
+                                <a href="${r.url}" target="_blank" class="w-full btn-premium py-3 text-[10px] tracking-[0.2em]">Open Resource</a>
+                            </div>
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                });
+            } catch (e) { grid.innerHTML = '<div class="col-span-full p-20 glass-card text-rose-500 font-bold text-center border-rose-500/20">Connection error.</div>'; }
         }
-        
+        async function logout() { await fetch('/api/logout', { method: 'POST' }); window.location.href = '/login'; }
         loadResources();
     </script>
 </body>

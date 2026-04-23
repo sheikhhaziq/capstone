@@ -3,21 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Psychologist Login</title>
+    <title>MindBridge — Psychologist Login</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/static/css/theme.css">
+    <script src="/static/js/theme.js"></script>
 </head>
-<body class="bg-slate-100 min-h-screen flex items-center justify-center p-4">
-    <div class="w-full max-w-md bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-        <h1 class="text-2xl font-bold text-slate-800">Psychologist Login</h1>
-        <div class="mt-5 space-y-3">
-            <input id="email" type="email" placeholder="Email"
-                class="w-full bg-slate-100 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500">
-            <input id="password" type="password" placeholder="Password"
-                class="w-full bg-slate-100 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500">
-            <button onclick="login()"
-                class="w-full bg-teal-600 hover:bg-teal-700 text-white rounded-xl py-3 text-sm font-medium">Login</button>
+<body class="min-h-screen flex items-center justify-center p-4 overflow-hidden">
+    <button id="theme-toggle" class="theme-toggle" title="Toggle Theme">
+        <span id="theme-toggle-icon">☀️</span>
+    </button>
+
+    <div class="w-full max-w-md glass-card p-8 relative z-10">
+        <div class="mb-8 text-center text-accent-indigo">
+            <h1 class="text-4xl font-bold mb-2">Psychologist Portal</h1>
+            <p class="text-secondary font-medium uppercase tracking-widest text-xs">MindBridge Specialist Login</p>
         </div>
-        <p id="message" class="text-sm mt-3 text-red-600"></p>
+
+        <h2 class="text-xl font-bold mb-6">Staff Login</h2>
+        
+        <div class="space-y-4">
+            <div class="space-y-1">
+                <label class="text-xs font-semibold px-1 uppercase tracking-wider text-muted">Email Address</label>
+                <input id="email" type="email" placeholder="name@mindbridge.edu" class="w-full">
+            </div>
+            <div class="space-y-1">
+                <label class="text-xs font-semibold px-1 uppercase tracking-wider text-muted">Password</label>
+                <input id="password" type="password" placeholder="••••••••" class="w-full">
+            </div>
+            
+            <button onclick="login()" class="w-full btn-premium mt-4">
+                <span>Access Dashboard</span>
+                <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path></svg>
+            </button>
+        </div>
+
+        <p id="message" class="text-sm mt-4 text-rose-500 font-medium text-center h-5"></p>
+
+        <div class="mt-8 pt-6 border-t border-white/10 text-center">
+            <a href="/login" class="text-xs text-muted hover:text-primary transition-colors flex items-center justify-center">
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                Student Login
+            </a>
+        </div>
     </div>
 
     <script>
@@ -25,18 +52,39 @@
             const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value.trim();
             const message = document.getElementById('message');
+            const btn = document.querySelector('.btn-premium');
+            
             message.textContent = '';
-            const response = await fetch('/api/psychologist/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password })
-            });
-            const data = await response.json();
-            if (response.ok && data.status === 'OK') {
-                window.location.href = '/psychologist/dashboard';
+            
+            if (!email || !password) {
+                message.textContent = 'Email and password are required.';
                 return;
             }
-            message.textContent = data.message || 'Login failed.';
+
+            btn.disabled = true;
+            btn.style.opacity = '0.7';
+            btn.innerHTML = '<span>Authenticating...</span>';
+
+            try {
+                const response = await fetch('/api/psychologist/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                const data = await response.json();
+                
+                if (response.ok && data.status === 'OK') {
+                    window.location.href = '/psychologist/dashboard';
+                    return;
+                }
+                message.textContent = data.message || 'Login failed.';
+            } catch (error) {
+                message.textContent = 'Server unreachable. Check your connection.';
+            } finally {
+                btn.disabled = false;
+                btn.style.opacity = '1';
+                btn.innerHTML = '<span>Access Dashboard</span><svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path></svg>';
+            }
         }
     </script>
 </body>

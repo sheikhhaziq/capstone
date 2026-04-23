@@ -3,182 +3,268 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Psychologist Dashboard</title>
+    <title>MindBridge — Psychologist Portal</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/static/css/theme.css">
+    <script src="/static/js/theme.js"></script>
 </head>
-<body class="bg-slate-100 min-h-screen p-6">
-    <div class="max-w-5xl mx-auto">
-        <div class="flex items-center justify-between mb-6">
-            <h1 class="text-2xl font-bold text-slate-800">Psychologist Dashboard</h1>
-            <button onclick="logout()" class="text-sm text-red-600 hover:underline">Logout</button>
-        </div>
-        <p id="session-text" class="text-sm text-slate-600 mb-4"></p>
-        <div class="grid lg:grid-cols-3 gap-6">
-            <section class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm h-fit">
-                <h2 class="font-bold text-slate-800 mb-4 tracking-tight">Add Availability Slot</h2>
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Start Time</label>
-                        <input id="start_at" type="datetime-local" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-3 text-sm focus:ring-2 focus:ring-teal-500 outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">End Time</label>
-                        <input id="end_at" type="datetime-local" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-3 text-sm focus:ring-2 focus:ring-teal-500 outline-none">
-                    </div>
-                    <button id="add-slot-btn" onclick="addSlot()" class="w-full pt-2 px-4 py-3 bg-teal-600 text-white font-semibold rounded-xl shadow-sm hover:bg-teal-700 hover:shadow transition-all focus:outline-none">Create Slot</button>
+<body class="fade-in">
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="mb-10 px-2 text-center md:text-left">
+                <h1 class="text-2xl font-black gradient-text tracking-tighter uppercase">Psychologist Portal</h1>
+                <p class="text-[10px] font-bold text-muted uppercase tracking-[0.2em] mt-1 italic">MindBridge Psychologist Hub</p>
+            </div>
+
+            <nav class="flex-1 space-y-1">
+                <a href="javascript:void(0)" onclick="switchView('clinical')" id="nav-clinical" class="nav-link active">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8v8m-4-5l4 4 4-4m-4 4V4"></path></svg>
+                    Clinical Hub
+                </a>
+                <a href="javascript:void(0)" onclick="switchView('analytics')" id="nav-analytics" class="nav-link">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                    Analytics
+                </a>
+            </nav>
+
+            <div class="pt-10 mt-10 border-t border-white/5">
+                <button onclick="logout()" class="nav-link text-rose-500 w-full text-left font-bold">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                    Logout
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Mobile Header -->
+            <header class="lg:hidden flex items-center justify-between mb-8">
+                 <h1 class="text-xl font-black gradient-text tracking-tighter uppercase">MindBridge</h1>
+                 <button id="mobile-menu-toggle" class="p-2 glass-card rounded-lg">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+                 </button>
+            </header>
+
+            <div class="flex items-center justify-between mb-10">
+                <div>
+                    <h2 id="session-text" class="text-3xl font-black tracking-tight italic">Welcome back</h2>
+                    <p class="text-sm text-secondary mt-1">Authorized accountant dashboard.</p>
                 </div>
-            </section>
+                <div class="hidden md:flex items-center">
+                     <span class="px-4 py-2 glass-card text-xs font-black uppercase tracking-widest text-accent-indigo">Psychologist Verified</span>
+                </div>
+            </div>
 
-            <section class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
-                <h2 class="font-bold text-slate-800 mb-4 tracking-tight">Upcoming Open Slots</h2>
-                <div id="slot-list" class="space-y-3 text-sm"></div>
-            </section>
+            <div id="clinical-view" class="view-section">
+                <div class="grid lg:grid-cols-12 gap-8">
+                <section class="lg:col-span-4 space-y-8">
+                    <div class="glass-card p-8 bg-gradient-to-br from-accent-indigo/5 to-accent-teal/5 border-accent-indigo/10">
+                        <h3 class="text-lg font-black uppercase tracking-widest mb-6 flex items-center">
+                            <svg class="w-5 h-5 mr-3 text-accent-indigo" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                            Add Availability
+                        </h3>
+                        <div class="space-y-6">
+                            <div class="space-y-2">
+                                <label class="text-[10px] font-black uppercase tracking-widest text-muted px-1">Session Start</label>
+                                <input id="start_at" type="datetime-local">
+                            </div>
+                            <div class="space-y-2">
+                                <label class="text-[10px] font-black uppercase tracking-widest text-muted px-1">Session End</label>
+                                <input id="end_at" type="datetime-local">
+                            </div>
+                            <button id="add-slot-btn" onclick="addSlot()" class="w-full btn-premium py-4">
+                                <span class="tracking-widest font-black text-xs">Add Slot</span>
+                            </button>
+                        </div>
+                    </div>
 
-            <section class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
-                <h2 class="font-bold text-slate-800 mb-4 tracking-tight">Booked Appointments</h2>
-                <div id="appointment-list" class="space-y-3 text-sm"></div>
-            </section>
-        </div>
+                    <div>
+                        <h3 class="text-lg font-black uppercase tracking-widest mb-4 flex items-center px-2">
+                            <span class="w-2 h-6 bg-accent-teal rounded-full mr-3"></span>
+                            Live Slots
+                        </h3>
+                        <div id="slot-list" class="space-y-4"></div>
+                    </div>
+                </section>
+
+                <section class="lg:col-span-8 space-y-8">
+                    <h3 class="text-lg font-black uppercase tracking-widest mb-6 flex items-center px-2">
+                        <span class="w-2 h-6 bg-accent-indigo rounded-full mr-3"></span>
+                        Scheduled Sessions
+                    </h3>
+                    <div id="appointment-list" class="grid md:grid-cols-2 gap-6"></div>
+                </section>
+            </div>
+            </div>
+
+            <div id="analytics-view" class="view-section hidden">
+                <h3 class="text-2xl font-black uppercase tracking-widest mb-10 px-2 flex items-center">
+                    <svg class="w-8 h-8 mr-4 text-accent-indigo" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                    Analytics Overview
+                </h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+                    <div class="glass-card p-10 border-l-4 border-accent-indigo">
+                        <p class="text-[10px] font-black uppercase tracking-[0.3em] text-muted mb-2">Total Scheduled Sessions</p>
+                        <h4 id="stat-sessions" class="text-5xl font-black tracking-tighter">-</h4>
+                    </div>
+                    <div class="glass-card p-10 border-l-4 border-accent-teal">
+                        <p class="text-[10px] font-black uppercase tracking-[0.3em] text-muted mb-2">Unique Students Helped</p>
+                        <h4 id="stat-students" class="text-5xl font-black tracking-tighter">-</h4>
+                    </div>
+                    <div class="glass-card p-10 border-l-4 border-accent-rose">
+                        <p class="text-[10px] font-black uppercase tracking-[0.3em] text-muted mb-2">Total Availability Slots</p>
+                        <h4 id="stat-slots" class="text-5xl font-black tracking-tighter">-</h4>
+                    </div>
+                </div>
+
+                <div class="glass-card p-12 bg-gradient-to-br from-accent-indigo/5 to-transparent border-accent-indigo/10">
+                    <h5 class="font-black uppercase tracking-widest text-sm mb-6">Insight Summary</h5>
+                    <p class="text-secondary leading-relaxed">
+                        Your performance metrics are optimized. You have maintained a consistent presence in the MindBridge student network, contributing to the global wellness score. Continue updating your availability to reach more students in need.
+                    </p>
+                </div>
+            </div>
+        </main>
     </div>
+
+    <button id="theme-toggle" class="theme-toggle" title="Toggle Theme">
+        <span id="theme-toggle-icon">☀️</span>
+    </button>
 
     <script>
         function showToast(message, type = 'success') {
             const toast = document.createElement('div');
-            toast.className = `fixed bottom-4 right-4 px-6 py-3 rounded-xl shadow-xl text-white font-medium transform transition-all translate-y-full opacity-0 z-50 ${type === 'success' ? 'bg-teal-600' : 'bg-rose-600'}`;
-            toast.textContent = message;
+            toast.className = `fixed bottom-24 right-6 px-6 py-4 rounded-2xl shadow-2xl glass-card z-50 transform transition-all translate-y-20 opacity-0 flex items-center border-l-4 ${type === 'success' ? 'border-accent-teal' : 'border-rose-500'}`;
+            toast.innerHTML = `
+                <div class="w-8 h-8 rounded-full flex items-center justify-center mr-3 ${type === 'success' ? 'bg-accent-teal/10 text-accent-teal' : 'bg-rose-500/10 text-rose-500'}">
+                    ${type === 'success' ? '✓' : '!'}
+                </div>
+                <span class="font-bold text-sm tracking-tight">${message}</span>
+            `;
             document.body.appendChild(toast);
-            
-            setTimeout(() => { toast.classList.remove('translate-y-full', 'opacity-0'); }, 10);
+            setTimeout(() => toast.classList.remove('translate-y-20', 'opacity-0'), 10);
             setTimeout(() => {
-                toast.classList.add('translate-y-full', 'opacity-0');
+                toast.classList.add('translate-y-20', 'opacity-0');
                 setTimeout(() => toast.remove(), 300);
             }, 3000);
         }
 
         function formatTime(iso) {
-            const d = new Date(iso);
-            return d.toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true });
+            return new Date(iso).toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true });
         }
 
-        function toIso(value) {
-            return new Date(value).toISOString();
-        }
+        function toIso(value) { return new Date(value).toISOString(); }
 
         async function requirePsychologistSession() {
             const response = await fetch('/api/session');
-            if (!response.ok) {
-                window.location.href = '/psychologist/login';
-                return null;
-            }
+            if (!response.ok) { window.location.href = '/psychologist/login'; return null; }
             const data = await response.json();
-            if (data.user.role !== 'psychologist') {
-                window.location.href = '/psychologist/login';
-                return null;
-            }
-            document.getElementById('session-text').textContent = `Welcome back, ${data.user.name}`;
+            if (data.user.role !== 'psychologist') { window.location.href = '/psychologist/login'; return null; }
+            document.getElementById('session-text').textContent = `Expert Node: ${data.user.name}`;
             return data.user;
+        }
+
+        function switchView(view) {
+            document.querySelectorAll('.view-section').forEach(s => s.classList.add('hidden'));
+            document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+            
+            document.getElementById(`${view}-view`).classList.remove('hidden');
+            document.getElementById(`nav-${view}`).classList.add('active');
+            
+            if (view === 'analytics') loadAnalytics();
+        }
+
+        async function loadAnalytics() {
+            const response = await fetch('/api/psychologist/analytics');
+            const data = await response.json();
+            if (response.ok) {
+                document.getElementById('stat-sessions').textContent = data.total_appointments;
+                document.getElementById('stat-students').textContent = data.unique_students;
+                document.getElementById('stat-slots').textContent = data.total_slots;
+            }
         }
 
         async function addSlot() {
             const startRaw = document.getElementById('start_at').value;
             const endRaw = document.getElementById('end_at').value;
             const btn = document.getElementById('add-slot-btn');
-            
-            if (!startRaw || !endRaw) {
-                showToast('Please provide start and end date-time.', 'error');
-                return;
-            }
-            
-            const originalText = btn.textContent;
-            btn.textContent = 'Creating...';
+            if (!startRaw || !endRaw) { showToast('Start and end times required.', 'error'); return; }
+            btn.innerHTML = '<span class="animate-pulse">Processing...</span>';
             btn.disabled = true;
-            btn.classList.add('opacity-70');
-
-            const response = await fetch('/api/psychologist/slots', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ start_at: toIso(startRaw), end_at: toIso(endRaw) })
-            });
-            const data = await response.json();
-            
-            btn.textContent = originalText;
-            btn.disabled = false;
-            btn.classList.remove('opacity-70');
-
-            if (response.ok) {
-                showToast('Slot securely added.', 'success');
-                document.getElementById('start_at').value = '';
-                document.getElementById('end_at').value = '';
-                await loadOpenSlots();
-            } else {
-                showToast(data.detail || data.message || 'Could not create slot.', 'error');
-            }
+            try {
+                const response = await fetch('/api/psychologist/slots', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ start_at: toIso(startRaw), end_at: toIso(endRaw) })
+                });
+                if (response.ok) {
+                    showToast('Slot added successfully.', 'success');
+                    document.getElementById('start_at').value = '';
+                    document.getElementById('end_at').value = '';
+                    await loadOpenSlots();
+                } else {
+                    const data = await response.json();
+                    showToast(data.detail || data.message || 'Action failed.', 'error');
+                }
+            } catch (e) { showToast('Connection failed.', 'error'); } 
+            finally { btn.innerHTML = '<span class="tracking-widest font-black text-xs">Add Slot</span>'; btn.disabled = false; }
         }
 
         async function loadOpenSlots() {
             const list = document.getElementById('slot-list');
-            list.innerHTML = '<div class="text-slate-400 italic py-4">Loading open slots...</div>';
-            
+            list.innerHTML = '<div class="text-muted italic py-4 opacity-50 text-xs font-bold uppercase tracking-widest text-center">Loading slots...</div>';
             const response = await fetch('/api/psychologist/slots');
             const data = await response.json();
-            
-            if (!response.ok || data.status !== 'OK') {
-                list.innerHTML = '<div class="text-rose-500 py-4">Could not load open slots.</div>';
-                return;
-            }
-            if (data.slots.length === 0) {
-                list.innerHTML = '<div class="p-6 text-center border border-dashed rounded-xl border-slate-300 text-slate-500">No open slots available.</div>';
-                return;
-            }
-            
+            if (!response.ok || data.status !== 'OK') { list.innerHTML = '<div class="text-rose-500 p-4 text-xs font-bold">NODE_SYNC_ERROR</div>'; return; }
+            if (data.slots.length === 0) { list.innerHTML = '<div class="p-8 glass-card text-center text-muted text-[10px] font-bold uppercase tracking-widest border-dashed opacity-50">Zero Slots Active</div>'; return; }
             list.innerHTML = '';
             data.slots.forEach(slot => {
-                const row = document.createElement('div');
-                row.className = 'border border-slate-200 bg-slate-50 rounded-xl p-4 transition-all hover:bg-white';
-                row.innerHTML = `
-                    <p class="text-slate-800 font-medium">${formatTime(slot.start_at)}</p>
-                    <p class="text-slate-500 text-xs mt-1">until ${formatTime(slot.end_at)}</p>
+                const card = document.createElement('div');
+                card.className = 'glass-card p-4 hover:border-accent-teal transition-all';
+                card.innerHTML = `
+                    <div class="flex items-center text-accent-teal mb-1">
+                        <svg class="w-3 h-3 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <p class="font-bold text-xs uppercase tracking-tight">${formatTime(slot.start_at)}</p>
+                    </div>
                 `;
-                list.appendChild(row);
+                list.appendChild(card);
             });
         }
 
         async function loadAppointments() {
             const list = document.getElementById('appointment-list');
-            list.innerHTML = '<div class="text-slate-400 italic py-4">Loading appointments...</div>';
-            
+            list.innerHTML = '<div class="col-span-full text-center py-20 animate-pulse font-bold text-muted uppercase tracking-[0.2em] text-xs">Loading appointments...</div>';
             const response = await fetch('/api/psychologist/appointments');
             const data = await response.json();
-            
-            if (!response.ok || data.status !== 'OK') {
-                list.innerHTML = '<div class="text-rose-500 py-4">Could not load appointments.</div>';
-                return;
-            }
-            if (data.appointments.length === 0) {
-                list.innerHTML = '<div class="p-6 text-center border border-dashed rounded-xl border-slate-300 text-slate-500">No appointments scheduled.</div>';
-                return;
-            }
-            
+            if (!response.ok || data.status !== 'OK') { list.innerHTML = '<div class="col-span-full text-rose-500 text-center font-bold">Error: Connection failed.</div>'; return; }
+            if (data.appointments.length === 0) { list.innerHTML = '<div class="col-span-full p-20 glass-card text-center text-muted text-xs font-black uppercase tracking-[0.3em] border-dashed opacity-30">No upcoming appointments</div>'; return; }
             list.innerHTML = '';
             data.appointments.forEach(item => {
-                const row = document.createElement('div');
-                row.className = 'border border-slate-200 rounded-xl p-4 bg-teal-50/30';
-                row.innerHTML = `
-                    <div class="flex justify-between items-start mb-2">
-                        <p class="font-bold text-slate-800">${item.student_name} <span class="font-normal text-slate-500 text-xs">#${item.student_id}</span></p>
-                        <span class="px-2 py-0.5 text-[10px] uppercase font-bold tracking-wider rounded-full bg-teal-100 text-teal-800">${item.status}</span>
+                const card = document.createElement('div');
+                card.className = 'glass-card p-6 border-l-4 border-accent-indigo hover:border-accent-teal transition-all group';
+                card.innerHTML = `
+                    <div class="flex justify-between items-start mb-6">
+                        <div>
+                            <h4 class="font-black text-xl tracking-tight">${item.student_name}</h4>
+                            <p class="text-[10px] text-muted font-bold mt-1 tracking-widest uppercase">Student ID: ${item.student_id}</p>
+                        </div>
+                        <span class="px-3 py-1 text-[9px] font-black uppercase tracking-widest bg-accent-indigo/5 text-accent-indigo rounded-md group-hover:bg-accent-indigo group-hover:text-white transition-all">${item.status}</span>
                     </div>
-                    <p class="text-slate-600 font-medium">${formatTime(item.start_at)}</p>
-                    <a class="mt-4 block text-center w-full px-4 py-2.5 bg-slate-800 text-white font-medium rounded-lg hover:bg-slate-900 transition" href="/appointments/chat/${item.appointment_id}">Host Session</a>
+                    <div class="flex items-center text-secondary mb-8 text-xs font-bold bg-white/5 p-3 rounded-xl border border-white/5">
+                        <svg class="w-4 h-4 mr-2 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                        ${formatTime(item.start_at)}
+                    </div>
+                    <a href="/appointments/chat/${item.appointment_id}" class="w-full btn-premium py-3 uppercase text-[10px] tracking-[0.2em] font-black">
+                        Open Chat
+                    </a>
                 `;
-                list.appendChild(row);
+                list.appendChild(card);
             });
         }
 
-        async function logout() {
-            await fetch('/api/logout', { method: 'POST' });
-            window.location.href = '/psychologist/login';
-        }
+        async function logout() { await fetch('/api/logout', { method: 'POST' }); window.location.href = '/psychologist/login'; }
 
         (async function init() {
             const session = await requirePsychologistSession();
